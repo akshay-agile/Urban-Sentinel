@@ -1,0 +1,8 @@
+# See backend/.gitignore, mobile/.gitignore, dashboard/.gitignore for
+# per-project rules. This covers repo-wide / OS-level noise.
+
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/

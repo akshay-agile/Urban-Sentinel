@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Urban Sentinel",
+    "slug": "urban-sentinel",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#0f172a"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.urbansentinel.app"
+    },
+    "android": {
+      "package": "com.urbansentinel.app",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "NOTIFICATIONS"
+      ]
+    }
+  }
+}
