@@ -148,4 +148,111 @@ backend/
 └── .gitignore
 ```
 
-No API endpoints, no MQTT, and no business logic yet — that's Sessions 3–5.
+## Session 3 — MQTT setup (Windows)
+
+### 1. Install Mosquitto
+
+Download from https://mosquitto.org/download/ → Windows installer
+(`mosquitto-2.x.x-install-windows-x64.exe`). Run it, keep defaults.
+This installs Mosquitto as a **Windows service** and adds
+`C:\Program Files\mosquitto` to disk (add it to your PATH if you want
+`mosquitto_pub`/`mosquitto_sub` runnable from any folder — the installer
+usually offers to do this for you).
+
+### 2. Allow local (anonymous) connections for development
+
+Open `C:\Program Files\mosquitto\mosquitto.conf` in a text editor (as
+Administrator) and make sure these two lines are present:
+
+```
+listener 1883
+allow_anonymous true
+```
+
+This is fine for local development. Never do this on a broker exposed to
+the internet.
+
+### 3. Restart the Mosquitto service
+
+`Win + R` → `services.msc` → find **Mosquitto Broker** → right-click →
+Restart. (Or first-time start it if it isn't running.)
+
+### 4. Verify the broker works, independent of our code
+
+Open two PowerShell windows.
+
+Window 1 (subscribe):
+```powershell
+mosquitto_sub -h localhost -t "urban_sentinel/sensors/#" -v
+```
+
+Window 2 (publish):
+```powershell
+mosquitto_pub -h localhost -t "urban_sentinel/sensors/fire_node_1" -m "{\"device_id\": \"fire_node_1\", \"timestamp\": \"2026-01-01T00:00:00Z\", \"temperature\": 30, \"humidity\": 50, \"gas\": 100, \"flame\": 0, \"rain\": 0, \"water_level\": 5, \"vibration\": 0, \"sound\": 20, \"latitude\": 12.9716, \"longitude\": 77.5946}"
+```
+
+Window 1 should immediately print the message. If it does, the broker is
+working correctly — independent of Python entirely.
+
+### 5. Run the real subscriber (writes to PostgreSQL)
+
+With your venv activated and PostgreSQL running (Session 2):
+
+```powershell
+cd backend
+python -m app.mqtt.subscriber
+```
+
+You should see:
+```
+Connected to MQTT broker
+Subscribed to urban_sentinel/sensors/#
+```
+
+### 6. Test the full pipe with the test publisher
+
+In a second PowerShell window (venv activated):
+
+```powershell
+cd backend
+python -m scripts.test_publish --device-id fire_node_1 --count 3 --interval 1
+```
+
+Back in the subscriber window you should see `Auto-registered new device`
+then `Stored reading from fire_node_1` for each message. Check it actually
+landed in Postgres via pgAdmin (`devices` and `sensor_readings` tables),
+or:
+
+```powershell
+psql -U postgres -d urban_sentinel -c "SELECT * FROM sensor_readings ORDER BY id DESC LIMIT 5;"
+```
+
+## Structure (updated — Session 3)
+
+```
+backend/
+├── app/
+│   ├── mqtt/
+│   │   ├── client.py       Shared paho-mqtt client factory
+│   │   ├── topics.py       Topic naming (urban_sentinel/sensors/{device_id})
+│   │   └── subscriber.py   Parses payloads, persists via CRUD — run standalone for now
+│   ├── models/ crud/ db/   (Session 2)
+│   ├── main.py
+│   └── core/config.py
+├── scripts/
+│   └── test_publish.py     One-off test publisher — NOT the real simulator (that's Session 4)
+├── alembic/
+├── requirements.txt
+└── .env.example
+```
+
+The subscriber runs as its own process (`python -m app.mqtt.subscriber`)
+rather than inside the FastAPI app — wiring it into the app's lifecycle
+happens in Session 8 (Backend Integration), so the API and the ingestion
+pipeline stay cleanly separable until then.
+
+Tested end-to-end before delivery: broker relay confirmed with
+`mosquitto_pub`/`mosquitto_sub`, and the actual subscriber module
+(unmodified) was run against a real database with the test publisher —
+device auto-registration, reading persistence, and malformed-message
+handling (bad JSON, missing fields) all verified without crashing.

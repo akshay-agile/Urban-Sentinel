@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     # Reserved for Session 3 (MQTT)
     mqtt_broker_host: str = "localhost"
     mqtt_broker_port: int = 1883
+    mqtt_topic_prefix: str = "urban_sentinel/sensors"
 
     # Reserved for Session 10 (Firebase push notifications)
     firebase_credentials_path: str = ""
