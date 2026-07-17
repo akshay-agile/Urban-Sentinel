@@ -8,6 +8,7 @@ from fastapi import Depends, FastAPI
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.api.router import api_router
 from app.core.config import get_settings
 from app.db.session import get_db
 
@@ -18,6 +19,8 @@ app = FastAPI(
     description="AI-powered IoT Emergency Intelligence Platform — backend",
     version="0.1.0",
 )
+
+app.include_router(api_router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["system"])

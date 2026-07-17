@@ -251,8 +251,80 @@ rather than inside the FastAPI app — wiring it into the app's lifecycle
 happens in Session 8 (Backend Integration), so the API and the ingestion
 pipeline stay cleanly separable until then.
 
-Tested end-to-end before delivery: broker relay confirmed with
-`mosquitto_pub`/`mosquitto_sub`, and the actual subscriber module
-(unmodified) was run against a real database with the test publisher —
-device auto-registration, reading persistence, and malformed-message
-handling (bad JSON, missing fields) all verified without crashing.
+## Session 5 — Backend APIs
+
+All endpoints are under `/api/v1`. Interactive docs (Swagger UI) are the
+easiest way to try them: start the server and open
+http://localhost:8000/docs — every endpoint below is listed there with a
+"Try it out" button, no separate tool needed.
+
+```powershell
+cd backend
+.venv\Scripts\Activate.ps1
+uvicorn app.main:app --reload
+```
+
+### Devices
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/v1/devices/` | List (paginated via `skip`/`limit`) |
+| GET | `/api/v1/devices/{id}` | By primary key |
+| GET | `/api/v1/devices/by-device-id/{device_id}` | By the MQTT schema's `device_id` string, e.g. `fire_node_1` |
+| POST | `/api/v1/devices/` | Manually pre-register a node (409 if `device_id` already exists) |
+| PATCH | `/api/v1/devices/{id}` | Partial update |
+| DELETE | `/api/v1/devices/{id}` | |
+
+### Sensor Readings — **read-only**
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/v1/sensor-readings/` | List (paginated) |
+| GET | `/api/v1/sensor-readings/device/{device_pk}` | Recent readings for one device |
+| GET | `/api/v1/sensor-readings/{id}` | Single reading |
+
+No POST — readings only enter the system through the Session 3 MQTT
+pipeline. This keeps one single source of truth for sensor data.
+
+### Incidents
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/v1/incidents/` | List (paginated) |
+| GET | `/api/v1/incidents/active` | Only `status=active` |
+| GET | `/api/v1/incidents/{id}` | |
+| POST | `/api/v1/incidents/` | Manual creation — real auto-detection arrives in Session 11's rule engine |
+| PATCH | `/api/v1/incidents/{id}` | e.g. `{"status": "resolved"}` |
+| DELETE | `/api/v1/incidents/{id}` | |
+
+### Notifications
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/v1/notifications/` | List (paginated) |
+| GET | `/api/v1/notifications/user/{user_id}` | A user's notification history |
+| GET | `/api/v1/notifications/{id}` | |
+| POST | `/api/v1/notifications/` | Manual creation — real auto-generation arrives in Session 9/10 |
+| PATCH | `/api/v1/notifications/{id}` | e.g. `{"status": "sent"}` |
+| DELETE | `/api/v1/notifications/{id}` | |
+
+No User/Auth APIs yet — those are introduced in Session 6 alongside
+mobile Login/Register, which is what actually needs them.
+
+Tested end-to-end before delivery via FastAPI's TestClient: every
+endpoint above, plus the validation paths (duplicate `device_id` → 409,
+bad foreign keys on incident/notification creation → 404, resolved
+incidents correctly drop out of `/active`).
+
+## Structure (updated — Session 5)
+
+```
+backend/
+├── app/
+│   ├── api/
+│   │   ├── deps.py         Re-exports get_db
+│   │   ├── router.py        Aggregates all routers under /api/v1
+│   │   └── routes/           devices.py, sensor_readings.py, incidents.py, notifications.py
+│   ├── schemas/              Pydantic request/response models per resource
+│   ├── mqtt/ crud/ models/ db/   (Sessions 2–3)
+│   └── main.py
+├── scripts/
+├── alembic/
+└── requirements.txt
+```
