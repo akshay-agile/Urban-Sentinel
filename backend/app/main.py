@@ -5,6 +5,7 @@ Session 1: skeleton only. No routers, no DB, no MQTT wired in yet.
 Those are added in Sessions 2, 3, and 5.
 """
 from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -18,6 +19,18 @@ app = FastAPI(
     title="Urban Sentinel API",
     description="AI-powered IoT Emergency Intelligence Platform — backend",
     version="0.1.0",
+)
+
+# The dashboard runs in a browser — unlike the mobile app, browsers
+# enforce CORS, so the dev server's origin needs an explicit allow-list.
+# Wide open for local development; would need tightening for any real
+# deployment.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(api_router, prefix="/api/v1")

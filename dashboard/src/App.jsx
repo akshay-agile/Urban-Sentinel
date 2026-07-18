@@ -1,14 +1,28 @@
 /**
- * Urban Sentinel — Authority Dashboard Entrypoint
+ * Urban Sentinel — Authority Dashboard
  *
- * Session 1: skeleton only. Live devices, incident table, maps, and
- * analytics are built in Session 7.
+ * Session 7: full router + pages. No auth wall on this internal tool for
+ * now (not in this session's scope) — pure read/monitor + resolve.
  */
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+
+import Layout from './components/Layout';
+import DashboardHome from './pages/DashboardHome';
+import DevicesPage from './pages/DevicesPage';
+import IncidentsPage from './pages/IncidentsPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+
 export default function App() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center">
-      <h1 className="text-2xl font-bold">Urban Sentinel</h1>
-      <p className="text-slate-400 mt-2">Authority dashboard skeleton — Session 1</p>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<DashboardHome />} />
+          <Route path="/devices" element={<DevicesPage />} />
+          <Route path="/incidents" element={<IncidentsPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }

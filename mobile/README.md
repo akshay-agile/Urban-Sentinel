@@ -106,3 +106,18 @@ created incidents via `/docs` in Session 5).
 - **Works on Wi-Fi at home but not elsewhere**: expected — your PC and
   phone need to be on the same network. Public/campus Wi-Fi sometimes
   blocks device-to-device traffic entirely (client isolation).
+- **Metro shows `exp://127.0.0.1:8081` instead of your LAN IP**: some
+  Windows setups (multiple network adapters, VPN software, etc.) confuse
+  Expo's auto-detection. Force it explicitly:
+  ```powershell
+  $env:REACT_NATIVE_PACKAGER_HOSTNAME = "192.168.1.5"   # your actual IP
+  npx expo start
+  ```
+  Confirm the terminal now shows `Metro waiting on exp://192.168.1.5:8081`
+  before scanning.
+- **"Project is incompatible with this version of Expo Go" (SDK
+  mismatch)**: the App Store/Play Store only ever distributes the latest
+  Expo Go, which only opens projects on the matching SDK. This project is
+  pinned to **SDK 54** — if `npm install` somehow lands you on an older
+  SDK, run `npx expo install expo@^54.0.0 && npx expo install --fix`, then
+  delete `node_modules` + `package-lock.json` and reinstall.

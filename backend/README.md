@@ -339,6 +339,14 @@ Tested end-to-end before delivery: register, duplicate-email rejection
 password, `/me` with missing/invalid/valid tokens, and profile update —
 all via FastAPI's TestClient, all passing.
 
+## Session 7 — CORS (for the dashboard)
+
+`app/main.py` now has `CORSMiddleware` enabled, wide open (`allow_origins=["*"]`)
+since this is local development. This is what lets the browser-based
+dashboard call the API — the mobile app never needed this, since CORS is
+a browser-only restriction. No new dependencies, no `.env` changes — pure
+code, already active once you pull the latest backend files.
+
 ## Structure (updated — Session 6)
 
 ```
