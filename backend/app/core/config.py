@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     # Reserved for Session 10 (Firebase push notifications)
     firebase_credentials_path: str = ""
 
+    # Session 6 (Auth)
+    secret_key: str = "dev-secret-key-change-this-before-any-real-deployment"
+    access_token_expire_minutes: int = 60 * 24 * 7  # 7 days — mobile app stays logged in
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 

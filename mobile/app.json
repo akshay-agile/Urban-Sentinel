@@ -9,10 +9,15 @@
     "splash": {
       "backgroundColor": "#0f172a"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.urbansentinel.app"
+      "bundleIdentifier": "com.urbansentinel.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Urban Sentinel uses your location to alert you about nearby emergencies."
+      }
     },
     "android": {
       "package": "com.urbansentinel.app",
@@ -21,6 +26,11 @@
         "ACCESS_COARSE_LOCATION",
         "NOTIFICATIONS"
       ]
-    }
+    },
+    "plugins": [
+      "expo-asset",
+      "expo-font",
+      "expo-secure-store"
+    ]
   }
 }

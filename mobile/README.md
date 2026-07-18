@@ -40,6 +40,69 @@ mobile/
 └── assets/         Icons/images — add app icon & splash here
 ```
 
-No screens, navigation, or API calls are wired in yet — Session 6 adds
-Login, Register, Home, Alerts, Nearby Incidents, History, Profile, and
-Settings screens. Session 10 wires in Firebase push notifications.
+## Session 6 — Connecting to your backend (Windows)
+
+Your phone is a **different device** from your PC — `localhost` in the
+app means the phone itself, not your computer. You need your PC's actual
+LAN IP address.
+
+### 1. Find your PC's LAN IP
+
+```powershell
+ipconfig
+```
+
+Look for **IPv4 Address** under your active adapter (Wi-Fi, usually).
+It'll look like `192.168.1.42`. Your phone and PC must be on the **same
+Wi-Fi network**.
+
+### 2. Set it in the app
+
+Edit `mobile/src/config.js`:
+
+```js
+export const API_BASE_URL = 'http://192.168.1.42:8000/api/v1'; // your actual IP
+```
+
+### 3. Start the backend so it's reachable on your network
+
+By default `uvicorn` only listens on `localhost`, which your phone can't
+reach even with the right IP. Bind to all interfaces instead:
+
+```powershell
+cd backend
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### 4. Allow it through Windows Firewall
+
+The first time you do this, Windows may show a firewall prompt — click
+**Allow access** (for Private networks at least). If you don't see a
+prompt and the app still can't connect, add a rule manually:
+
+```powershell
+New-NetFirewallRule -DisplayName "Urban Sentinel Backend" -Direction Inbound -LocalPort 8000 -Protocol TCP -Action Allow
+```
+
+### 5. Install new dependencies and run
+
+```powershell
+cd mobile
+npm install
+npx expo start
+```
+
+Scan the QR with Expo Go. Try: Register → should land on Home → tap
+"Enable location" → grant permission → check Profile shows your
+coordinates → check Nearby Incidents loads (will be empty unless you've
+created incidents via `/docs` in Session 5).
+
+### Troubleshooting
+
+- **"Network Error" on Login/Register**: usually the IP in `config.js` is
+  wrong, or `--host 0.0.0.0` wasn't used, or the firewall is blocking it.
+  Test by opening `http://<your-ip>:8000/health` in your **phone's**
+  browser — if that doesn't load, the app won't be able to reach it either.
+- **Works on Wi-Fi at home but not elsewhere**: expected — your PC and
+  phone need to be on the same network. Public/campus Wi-Fi sometimes
+  blocks device-to-device traffic entirely (client isolation).

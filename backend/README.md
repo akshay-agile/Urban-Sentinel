@@ -304,26 +304,55 @@ pipeline. This keeps one single source of truth for sensor data.
 | PATCH | `/api/v1/notifications/{id}` | e.g. `{"status": "sent"}` |
 | DELETE | `/api/v1/notifications/{id}` | |
 
-No User/Auth APIs yet — those are introduced in Session 6 alongside
-mobile Login/Register, which is what actually needs them.
+## Session 6 — Auth APIs (for the mobile app)
 
-Tested end-to-end before delivery via FastAPI's TestClient: every
-endpoint above, plus the validation paths (duplicate `device_id` → 409,
-bad foreign keys on incident/notification creation → 404, resolved
-incidents correctly drop out of `/active`).
+Added to support mobile Login/Register/Profile. Same setup as before —
+just `pip install -r requirements.txt` again for the new deps (`bcrypt`,
+`pyjwt`, `email-validator`).
 
-## Structure (updated — Session 5)
+**Important — bind to your network, not just localhost:** the mobile app
+runs on your phone, a separate device, so it can't reach a server only
+listening on `127.0.0.1`. Start the server with:
+
+```powershell
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+See `mobile/README.md`'s "Session 6 — Connecting to your backend"
+section for finding your PC's LAN IP and firewall setup.
+
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/api/v1/auth/register` | `{full_name, email, password, phone_number?}` → 201 + access token + user |
+| POST | `/api/v1/auth/login` | `{email, password}` → access token + user |
+| GET | `/api/v1/auth/me` | Requires `Authorization: Bearer <token>` |
+| PATCH | `/api/v1/auth/me` | Update profile / register location & push token |
+
+Passwords are hashed with bcrypt, never stored or returned in plaintext.
+Tokens are JWTs (HS256, 7-day expiry) — the `secret_key` in
+`app/core/config.py` is a placeholder; fine for a college project running
+locally, but would need to become a real secret before any public
+deployment.
+
+Tested end-to-end before delivery: register, duplicate-email rejection
+(409), weak-password rejection (422), login with correct/incorrect
+password, `/me` with missing/invalid/valid tokens, and profile update —
+all via FastAPI's TestClient, all passing.
+
+## Structure (updated — Session 6)
 
 ```
 backend/
 ├── app/
 │   ├── api/
-│   │   ├── deps.py         Re-exports get_db
-│   │   ├── router.py        Aggregates all routers under /api/v1
-│   │   └── routes/           devices.py, sensor_readings.py, incidents.py, notifications.py
-│   ├── schemas/              Pydantic request/response models per resource
-│   ├── mqtt/ crud/ models/ db/   (Sessions 2–3)
-│   └── main.py
+│   │   ├── deps.py          get_db + get_current_user
+│   │   └── routes/           auth.py (new), devices.py, sensor_readings.py, incidents.py, notifications.py
+│   ├── core/
+│   │   ├── config.py
+│   │   └── security.py        Password hashing (bcrypt) + JWT (pyjwt)
+│   ├── schemas/
+│   │   └── user.py             UserRegister, UserLogin, UserRead, UserUpdateMe, Token
+│   └── mqtt/ crud/ models/ db/   (Sessions 2–3)
 ├── scripts/
 ├── alembic/
 └── requirements.txt
