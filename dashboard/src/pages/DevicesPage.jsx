@@ -2,12 +2,18 @@ import { useCallback } from 'react';
 
 import { getDevices } from '../api/endpoints';
 import { usePolling } from '../api/usePolling';
+import { useLiveSocket } from '../api/useLiveSocket';
 import DeviceTable from '../components/DeviceTable';
 import IncidentMap from '../components/IncidentMap';
 
 export default function DevicesPage() {
   const fetcher = useCallback(() => getDevices(), []);
-  const { data: devices, isLoading, error } = usePolling(fetcher, 5000);
+  const { data: devices, isLoading, error, refresh } = usePolling(fetcher, 5000);
+
+  useLiveSocket((event) => {
+    if (event.type === 'sensor_reading' || event.type === 'device_registered') refresh();
+  });
+
   const deviceList = devices || [];
 
   return (

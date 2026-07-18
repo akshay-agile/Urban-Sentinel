@@ -2,12 +2,17 @@ import { useCallback, useState } from 'react';
 
 import { getAllIncidents } from '../api/endpoints';
 import { usePolling } from '../api/usePolling';
+import { useLiveSocket } from '../api/useLiveSocket';
 import IncidentTable from '../components/IncidentTable';
 
 export default function IncidentsPage() {
   const [filter, setFilter] = useState('all'); // all | active | resolved
   const fetcher = useCallback(() => getAllIncidents(), []);
   const { data: incidents, isLoading, error, refresh } = usePolling(fetcher, 5000);
+
+  useLiveSocket((event) => {
+    if (event.type === 'incident_created' || event.type === 'incident_updated') refresh();
+  });
 
   const incidentList = (incidents || []).filter((i) => filter === 'all' || i.status === filter);
 

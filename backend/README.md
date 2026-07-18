@@ -194,20 +194,23 @@ mosquitto_pub -h localhost -t "urban_sentinel/sensors/fire_node_1" -m "{\"device
 Window 1 should immediately print the message. If it does, the broker is
 working correctly — independent of Python entirely.
 
-### 5. Run the real subscriber (writes to PostgreSQL)
+### 5. Run the backend (MQTT subscriber starts automatically — Session 8)
 
 With your venv activated and PostgreSQL running (Session 2):
 
 ```powershell
 cd backend
-python -m app.mqtt.subscriber
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-You should see:
+You should see, among the normal startup logs:
 ```
-Connected to MQTT broker
-Subscribed to urban_sentinel/sensors/#
+MQTT subscriber started (embedded)
 ```
+
+*(Sessions 3-7 required a separate `python -m app.mqtt.subscriber`
+terminal — that's no longer necessary as of Session 8, though the script
+still works standalone if you ever want to run ingestion in isolation.)*
 
 ### 6. Test the full pipe with the test publisher
 
@@ -218,7 +221,7 @@ cd backend
 python -m scripts.test_publish --device-id fire_node_1 --count 3 --interval 1
 ```
 
-Back in the subscriber window you should see `Auto-registered new device`
+Back in the backend's terminal you should see `Auto-registered new device`
 then `Stored reading from fire_node_1` for each message. Check it actually
 landed in Postgres via pgAdmin (`devices` and `sensor_readings` tables),
 or:
@@ -346,6 +349,50 @@ since this is local development. This is what lets the browser-based
 dashboard call the API — the mobile app never needed this, since CORS is
 a browser-only restriction. No new dependencies, no `.env` changes — pure
 code, already active once you pull the latest backend files.
+
+## Session 8 — Backend Integration
+
+**Workflow change: you no longer need a separate terminal for the MQTT
+subscriber.** It now starts automatically when the backend starts, and
+stops cleanly when you Ctrl+C it. The standalone
+`python -m app.mqtt.subscriber` script from Session 3 still works if you
+ever want to run ingestion in isolation for debugging, but for normal use
+just:
+
+```powershell
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Check the startup logs for `MQTT subscriber started (embedded)`. If
+Mosquitto isn't running yet, it retries 5 times (3s apart) before giving
+up and logging a clear error — the rest of the API still works even if
+MQTT is down, just without live sensor ingestion. Check status anytime at
+`GET /health/mqtt`.
+
+### Live updates over WebSocket
+
+New endpoint: `ws://localhost:8000/ws`. Every time a sensor reading is
+persisted, a device auto-registers, or an incident is created/updated,
+every connected client gets a JSON message immediately — this is what
+the dashboard (Session 7) now uses instead of purely waiting on its
+5-10s poll. Event shapes:
+
+```json
+{"type": "device_registered", "device_id": "fire_node_1"}
+{"type": "sensor_reading", "device_id": "fire_node_1", "temperature": 88.0, "flame": 1, ...}
+{"type": "incident_created", "id": 1, "incident_type": "fire", "severity": "critical"}
+{"type": "incident_updated", "id": 1, "status": "resolved"}
+```
+
+This is the plumbing Session 10 will reuse for the iOS foreground
+local-notification trigger.
+
+Tested end-to-end before delivery: started the real embedded subscriber
+(via FastAPI's actual lifespan, not a mock), published a live MQTT
+message through a real broker, and confirmed — in order — the WebSocket
+broadcast fired, the device was persisted, the reading was persisted, and
+both incident create/update correctly broadcast too. The standalone
+Session 3 script was re-verified working unchanged afterward.
 
 ## Structure (updated — Session 6)
 

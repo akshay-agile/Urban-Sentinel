@@ -1,5 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 
+import { useLiveSocket } from '../api/useLiveSocket';
+
 const NAV_ITEMS = [
   { to: '/', label: 'Overview', end: true },
   { to: '/devices', label: 'Devices' },
@@ -8,6 +10,12 @@ const NAV_ITEMS = [
 ];
 
 export default function Layout() {
+  // No-op handler — this instance exists purely to show connection status
+  // in the sidebar; each page also connects its own instance to react to
+  // events. Multiple WebSocket connections from one tab is fine at this
+  // scale.
+  const { isConnected } = useLiveSocket(() => {});
+
   return (
     <div className="flex h-screen bg-slate-950 text-white">
       <aside className="w-56 shrink-0 border-r border-slate-800 flex flex-col">
@@ -31,7 +39,15 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
-        <div className="px-5 py-4 text-xs text-slate-600 border-t border-slate-800">v0.1.0 · Session 7</div>
+        <div className="px-5 py-4 border-t border-slate-800">
+          <div className="flex items-center gap-2 text-xs">
+            <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-slate-600'}`} />
+            <span className={isConnected ? 'text-green-400' : 'text-slate-500'}>
+              {isConnected ? 'Live feed connected' : 'Live feed offline (polling)'}
+            </span>
+          </div>
+          <p className="text-xs text-slate-600 mt-2">v0.1.0 · Session 8</p>
+        </div>
       </aside>
       <main className="flex-1 overflow-y-auto">
         <Outlet />

@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { getDevices, getActiveIncidents } from '../api/endpoints';
 import { usePolling } from '../api/usePolling';
+import { useLiveSocket } from '../api/useLiveSocket';
 import StatCard from '../components/StatCard';
 import IncidentMap from '../components/IncidentMap';
 import IncidentTable from '../components/IncidentTable';
@@ -10,8 +11,18 @@ export default function DashboardHome() {
   const devicesFetcher = useCallback(() => getDevices(), []);
   const incidentsFetcher = useCallback(() => getActiveIncidents(), []);
 
-  const { data: devices, isLoading: devicesLoading } = usePolling(devicesFetcher, 5000);
-  const { data: incidents, isLoading: incidentsLoading, refresh } = usePolling(incidentsFetcher, 5000);
+  const { data: devices, isLoading: devicesLoading, refresh: refreshDevices } = usePolling(devicesFetcher, 5000);
+  const { data: incidents, isLoading: incidentsLoading, refresh: refreshIncidents } = usePolling(
+    incidentsFetcher,
+    5000
+  );
+
+  // Session 8: instead of waiting for the next poll tick, refetch the
+  // instant a relevant live event arrives over the WebSocket.
+  useLiveSocket((event) => {
+    if (event.type === 'sensor_reading' || event.type === 'device_registered') refreshDevices();
+    if (event.type === 'incident_created' || event.type === 'incident_updated') refreshIncidents();
+  });
 
   const isLoading = devicesLoading || incidentsLoading;
   const deviceList = devices || [];
@@ -45,7 +56,7 @@ export default function DashboardHome() {
           </div>
 
           <h3 className="text-lg font-semibold mb-3">Active Incidents</h3>
-          <IncidentTable incidents={incidentList} onChanged={refresh} />
+          <IncidentTable incidents={incidentList} onChanged={refreshIncidents} />
         </>
       )}
     </div>
