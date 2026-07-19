@@ -394,6 +394,41 @@ broadcast fired, the device was persisted, the reading was persisted, and
 both incident create/update correctly broadcast too. The standalone
 Session 3 script was re-verified working unchanged afterward.
 
+## Session 9 — Radius Engine
+
+No new dependencies. Two new services in `app/services/`:
+
+- **`geo.py`** — haversine great-circle distance (pure Python, no
+  PostGIS — unnecessary at this project's scale).
+- **`radius_engine.py`** — finds registered citizens (active, with a
+  known location and push token — reuses Session 2's
+  `crud.user.get_active_citizens_with_location`) within an incident's
+  `radius_meters`, sorted nearest-first.
+- **`notification_engine.py`** — creates a `Notification` for each match,
+  channel chosen per the Session 6/10 decision (Android → `fcm`, iOS →
+  `local`). **Idempotent**: re-running for the same incident skips users
+  who already have one, so it's always safe to call again.
+
+Wired automatically into `POST /api/v1/incidents/` — creating an incident
+now immediately notifies everyone in range, no extra step. Two more
+endpoints:
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/v1/incidents/{id}/nearby-users` | Debug/verification — shows exactly who's in range and their distance, without creating anything |
+| POST | `/api/v1/incidents/{id}/notify` | Manually re-runs generation (e.g. if new users registered after the incident was created) |
+
+Both incident-creation and manual-notify broadcast `notification_created`
+events over the Session 8 WebSocket too.
+
+Tested end-to-end before delivery: verified the haversine formula against
+a known reference (1° latitude ≈ 111,195m — dead on), then seeded users
+at known distances from an incident and confirmed via the real API —
+in-range users got notified with the correct channel, an out-of-range
+user got nothing, a user with no location got nothing, results were
+sorted nearest-first, and re-running notification generation created zero
+duplicates.
+
 ## Structure (updated — Session 6)
 
 ```
