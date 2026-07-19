@@ -1,14 +1,16 @@
 /**
  * Urban Sentinel — Mobile App Entrypoint
  *
- * Session 6: full navigation + auth wired up. AuthProvider manages the
- * session (token in expo-secure-store); RootNavigator switches between
- * the logged-out (Login/Register) and logged-in (tab) experiences.
+ * Session 10: notification handler configured once at startup, so
+ * foreground alerts actually display (see notifications/configureNotificationHandler.js).
  */
 import { StatusBar } from 'expo-status-bar';
 
 import { AuthProvider } from './src/context/AuthContext';
 import RootNavigator from './src/navigation/RootNavigator';
+import { configureNotificationHandler } from './src/notifications/configureNotificationHandler';
+
+configureNotificationHandler();
 
 export default function App() {
   return (

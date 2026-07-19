@@ -1,16 +1,18 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Location from 'expo-location';
-import { Platform, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { useAuth } from '../context/AuthContext';
 import * as api from '../api/endpoints';
+import { registerForPushNotifications } from '../notifications/registerPushToken';
 
 export default function HomeScreen({ navigation }) {
   const { user, refreshUser } = useAuth();
   const [incidentCount, setIncidentCount] = useState(null);
   const [locationStatus, setLocationStatus] = useState('unknown'); // unknown | granted | denied
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [setupWarning, setSetupWarning] = useState('');
 
   const loadIncidents = useCallback(async () => {
     try {
@@ -21,7 +23,9 @@ export default function HomeScreen({ navigation }) {
     }
   }, []);
 
-  const requestLocation = useCallback(async () => {
+  const enableAlerts = useCallback(async () => {
+    setSetupWarning('');
+
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
       setLocationStatus('denied');
@@ -32,8 +36,16 @@ export default function HomeScreen({ navigation }) {
     await api.updateMe({
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
-      platform: Platform.OS === 'ios' ? 'ios' : 'android',
     });
+
+    // Session 10: also request notification permission and register for
+    // push (Android gets a real FCM token; iOS just reports its platform
+    // — see registerPushToken.js for why).
+    const pushResult = await registerForPushNotifications();
+    if (pushResult.error) {
+      setSetupWarning(pushResult.error);
+    }
+
     await refreshUser();
   }, [refreshUser]);
 
@@ -69,11 +81,11 @@ export default function HomeScreen({ navigation }) {
         </Text>
       </View>
 
-      {!hasLocation && locationStatus !== 'denied' && (
-        <TouchableOpacity style={styles.locationButton} onPress={requestLocation}>
-          <Text style={styles.locationButtonText}>Enable location to get alerts for your area</Text>
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity style={styles.locationButton} onPress={enableAlerts}>
+        <Text style={styles.locationButtonText}>
+          {hasLocation ? 'Update location & notification settings' : 'Enable alerts for your area'}
+        </Text>
+      </TouchableOpacity>
 
       {locationStatus === 'denied' && (
         <Text style={styles.warning}>
@@ -81,6 +93,8 @@ export default function HomeScreen({ navigation }) {
           your phone's Settings.
         </Text>
       )}
+
+      {setupWarning ? <Text style={styles.warning}>{setupWarning}</Text> : null}
 
       <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate('NearbyIncidents')}>
         <Text style={styles.secondaryButtonText}>View Nearby Incidents</Text>

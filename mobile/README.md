@@ -97,7 +97,122 @@ Scan the QR with Expo Go. Try: Register → should land on Home → tap
 coordinates → check Nearby Incidents loads (will be empty unless you've
 created incidents via `/docs` in Session 5).
 
-### Troubleshooting
+## Session 10 — Push Notifications
+
+### iOS — no setup needed beyond what you already have
+
+iOS notifications work in plain Expo Go, exactly as before. Just tap
+**"Enable alerts for your area"** on Home — it now also requests
+notification permission. Keep the app **open** to see alerts arrive
+(foreground-only, by design — see the notification architecture
+decision).
+
+### Android — needs a one-time Firebase + development build setup
+
+This is the bigger piece. Android gets **real background push** — works
+even with the app closed — but that requires Firebase configuration
+baked into the app, which Expo Go (a shared, pre-built app) can't
+accommodate. You need a **development build**: your own custom version
+of Expo Go with your Firebase config included, built once and installed
+like a normal APK.
+
+#### 1. Add an Android app to your Firebase project
+
+(Create the project first — see `backend/README.md`'s Session 10 section
+if you haven't.)
+
+1. Firebase console → ⚙️ **Project settings** → **Your apps** → **Add app** → Android icon
+2. **Android package name**: `com.urbansentinel.app` (must match exactly — this is in `app.json`)
+3. Skip the optional nickname/SHA-1 fields → **Register app**
+4. **Download `google-services.json`**
+5. Move it into `mobile/` (same folder as `package.json`)
+
+> **Important: commit this file to git** (don't gitignore it). Unlike
+> `backend/firebase-service-account.json` — which grants admin access
+> and must stay private — `google-services.json` only identifies your
+> app to Firebase and carries no admin privileges; it's standard practice
+> to commit it (Google's own project templates do). More importantly,
+> **EAS Build's uploader skips anything not tracked in git** — if this
+> file is gitignored, your Android build will fail with a Gradle error
+> referencing a file that was never actually uploaded.
+
+#### 2. Install the new dependency
+
+```powershell
+cd mobile
+npm install
+```
+
+#### 3. Create a free Expo account (if you don't have one)
+
+https://expo.dev/signup — needed for EAS Build, which does the actual
+compiling in the cloud so you don't need Android Studio installed
+locally.
+
+```powershell
+npx eas login
+```
+
+#### 4. Build the development client (cloud build, ~15-20 min)
+
+```powershell
+npx eas build:configure
+npx eas build --profile development --platform android
+```
+
+When it finishes, it prints a link/QR code. Open that link on your
+Android phone (or scan the QR) — it downloads and installs an APK. This
+is your custom Expo Go replacement; keep it installed permanently, you
+only rebuild it if native config changes.
+
+*(Free tier covers plenty of builds for a college project — no card
+needed for this.)*
+
+#### 5. Start Expo in dev-client mode (not plain `expo start`)
+
+```powershell
+$env:REACT_NATIVE_PACKAGER_HOSTNAME = "192.168.1.5"   # your actual IP, see earlier session notes
+npx expo start --dev-client
+```
+
+#### 6. Open the app you installed in step 4, scan the QR
+
+From here it behaves like Expo Go did, just with Firebase baked in.
+
+#### 7. Register for push
+
+Tap **"Enable alerts for your area"** on Home. If it's actually working,
+you'll see no error. If you see a warning about being unable to get a
+push token, you're still on plain Expo Go somehow — double check you
+opened the custom dev-client app, not Expo Go.
+
+### Testing a real background push (Android)
+
+1. Confirm your backend has Firebase configured (`/health/firebase` shows `firebase_ready: true`)
+2. **Close or background the app entirely** on your Android phone
+3. Via http://localhost:8000/docs, `POST /api/v1/incidents/` with coordinates matching your registered location
+4. A real system notification should appear — even with the app fully closed
+
+### Testing iOS (foreground-only, as designed)
+
+1. Keep the app **open** on your iPhone (Expo Go, as always)
+2. Trigger an incident the same way
+3. A notification banner should appear while you're looking at the app
+
+## Structure (updated — Session 10)
+
+```
+mobile/
+├── src/
+│   ├── notifications/
+│   │   ├── configureNotificationHandler.js   Makes foreground alerts actually show
+│   │   ├── registerPushToken.js               Android: real FCM token. iOS: platform only.
+│   │   └── useLiveAlerts.js                    WebSocket listener — the whole iOS delivery mechanism
+│   └── ...(Sessions 6-9 structure unchanged)
+├── google-services.json     ← you add this (commit it — see EAS build note below)
+├── eas.json                  EAS Build config (development profile)
+└── app.json                  Now references google-services.json + expo-notifications plugin
+```
 
 - **"Network Error" on Login/Register**: usually the IP in `config.js` is
   wrong, or `--host 0.0.0.0` wasn't used, or the firewall is blocking it.

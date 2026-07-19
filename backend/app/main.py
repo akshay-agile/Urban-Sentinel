@@ -19,6 +19,7 @@ from app.db.session import get_db
 from app.mqtt import subscriber as mqtt_subscriber
 from app.mqtt.client import build_client
 from app.mqtt.client import connect as mqtt_connect
+from app.services.push_delivery import init_firebase
 from app.ws.manager import manager as ws_manager
 from app.ws.routes import router as ws_router
 
@@ -44,6 +45,9 @@ async def lifespan(app: FastAPI):
     live over WebSocket.
     """
     loop = asyncio.get_running_loop()
+
+    firebase_ready = init_firebase()
+    app.state.firebase_ready = firebase_ready
 
     def schedule_broadcast(event: dict) -> None:
         # MQTT callbacks run on paho's own thread, not the asyncio loop —
@@ -137,3 +141,14 @@ async def mqtt_health_check():
     """Reflects whether the embedded MQTT subscriber (Session 8) is connected."""
     connected = getattr(app.state, "mqtt_connected", False)
     return {"status": "ok" if connected else "disconnected", "mqtt_connected": connected}
+
+
+@app.get("/health/firebase", tags=["system"])
+async def firebase_health_check():
+    """Reflects whether Firebase Admin SDK (Session 10, Android FCM push) is configured."""
+    ready = getattr(app.state, "firebase_ready", False)
+    return {
+        "status": "ok" if ready else "not_configured",
+        "firebase_ready": ready,
+        "note": None if ready else "iOS local notifications still work; only Android FCM push is affected.",
+    }

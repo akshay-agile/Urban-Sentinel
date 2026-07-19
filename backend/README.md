@@ -429,6 +429,64 @@ user got nothing, a user with no location got nothing, results were
 sorted nearest-first, and re-running notification generation created zero
 duplicates.
 
+## Session 10 — Firebase Push Notifications
+
+New dependency: `firebase-admin` (`pip install -r requirements.txt`).
+
+### 1. Create a free Firebase project
+
+1. Go to https://console.firebase.google.com → **Add project**
+2. Name it anything (e.g. "urban-sentinel") → you can disable Google
+   Analytics for this project, not needed → Create
+
+### 2. Get a service account key (this is what the backend uses)
+
+1. In the Firebase console: ⚙️ **Project settings** → **Service accounts** tab
+2. Click **Generate new private key** → confirms → downloads a `.json` file
+3. Move that file into `backend/` and rename it to `firebase-service-account.json`
+   (already gitignored — never gets committed)
+
+### 3. Point the backend at it
+
+In `backend/.env`:
+```
+FIREBASE_CREDENTIALS_PATH=firebase-service-account.json
+```
+
+### 4. Restart the backend and confirm
+
+```powershell
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Look for `Firebase Admin SDK initialized — FCM push enabled` in the logs,
+or check http://localhost:8000/health/firebase → `firebase_ready: true`.
+
+**If you skip this entirely**, the app doesn't break — `fcm` (Android)
+notifications just stay `pending` forever with a warning logged, while
+`local` (iOS) notifications are completely unaffected, since those never
+touch Firebase at all.
+
+### How delivery actually works now
+
+- **Android (`channel: "fcm"`)**: the backend calls Firebase Admin SDK
+  directly with the user's registered device token — this is a real
+  push, works even if the app is closed.
+- **iOS (`channel: "local"`)**: nothing is sent server-side. The mobile
+  app is listening on the Session 8 WebSocket the whole time it's open;
+  when a `notification_created` event names that user, the app fires a
+  local notification itself. This only works while the app is in the
+  foreground — by design (see the notification architecture decision).
+
+Tested end-to-end before delivery: verified the Session 2 eligibility
+query (which had a real bug — it required a push token, which iOS users
+never have by design, so they'd never have been matched at all) is now
+fixed; verified with Firebase unconfigured that `fcm` notifications
+correctly stay `pending` while `local` ones still get marked `sent`; and
+verified, with a mocked Firebase send, that both the success path
+(`status: sent`, `sent_at` set) and failure path (`status: failed`) work
+correctly.
+
 ## Structure (updated — Session 6)
 
 ```

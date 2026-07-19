@@ -9,7 +9,9 @@
     "splash": {
       "backgroundColor": "#0f172a"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.urbansentinel.app",
@@ -19,11 +21,20 @@
     },
     "android": {
       "package": "com.urbansentinel.app",
+      "googleServicesFile": "./google-services.json",
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "NOTIFICATIONS"
       ]
+    },
+    "plugins": [
+      "expo-notifications"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "c97070c3-4a6d-4925-8f71-b6993bfa6489"
+      }
     }
   }
 }

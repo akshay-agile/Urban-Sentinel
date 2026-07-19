@@ -6,24 +6,42 @@ from app.api.deps import get_db
 from app.schemas.incident import IncidentCreate, IncidentRead, IncidentUpdate
 from app.schemas.notification import NotificationRead
 from app.schemas.radius import NearbyUserRead
+from app.services.notification_content import build_notification_content
 from app.services.notification_engine import generate_notifications_for_incident
+from app.services.push_delivery import deliver_notifications
 from app.services.radius_engine import find_users_in_radius
 from app.ws.manager import manager as ws_manager
 
 router = APIRouter(prefix="/incidents", tags=["incidents"])
 
 
-async def _broadcast_notifications(notifications, incident_id: int) -> None:
-    for n in notifications:
-        await ws_manager.broadcast(
-            {
-                "type": "notification_created",
-                "id": n.id,
-                "user_id": n.user_id,
-                "incident_id": incident_id,
-                "channel": n.channel.value,
-            }
-        )
+async def _notify(db: Session, incident) -> list:
+    """
+    Runs the Radius Engine, generates notifications, attempts real
+    delivery (FCM for Android via Session 10, best-effort mark-sent for
+    iOS local), and broadcasts a WebSocket event per notification —
+    complete with title/body so the mobile client can fire a local
+    notification without an extra API round-trip.
+    """
+    notifications = generate_notifications_for_incident(db, incident)
+    deliver_notifications(db, notifications, incident)
+
+    if notifications:
+        title, body = build_notification_content(incident)
+        for n in notifications:
+            await ws_manager.broadcast(
+                {
+                    "type": "notification_created",
+                    "id": n.id,
+                    "user_id": n.user_id,
+                    "incident_id": incident.id,
+                    "channel": n.channel.value,
+                    "status": n.status.value,
+                    "title": title,
+                    "body": body,
+                }
+            )
+    return notifications
 
 
 @router.get("/", response_model=list[IncidentRead])
@@ -77,11 +95,10 @@ async def create_incident(payload: IncidentCreate, db: Session = Depends(get_db)
         {"type": "incident_created", "id": obj.id, "incident_type": obj.incident_type.value, "severity": obj.severity.value}
     )
 
-    # Radius Engine + Notification Engine run automatically on every new
-    # incident, regardless of whether it was created manually (this
-    # endpoint) or, from Session 11 onward, by the automated rule engine.
-    notifications = generate_notifications_for_incident(db, obj)
-    await _broadcast_notifications(notifications, obj.id)
+    # Radius Engine + Notification Engine + push delivery run automatically
+    # on every new incident, regardless of whether it was created manually
+    # (this endpoint) or, from Session 11 onward, by the automated rule engine.
+    await _notify(db, obj)
 
     return obj
 
@@ -89,17 +106,16 @@ async def create_incident(payload: IncidentCreate, db: Session = Depends(get_db)
 @router.post("/{incident_id}/notify", response_model=list[NotificationRead])
 async def recompute_notifications(incident_id: int, db: Session = Depends(get_db)):
     """
-    Manually (re-)runs the Radius/Notification Engine for an existing
-    incident — e.g. if new users registered after the incident was
-    created. Safe to call repeatedly: already-notified users are skipped.
+    Manually (re-)runs the Radius/Notification/Delivery pipeline for an
+    existing incident — e.g. if new users registered after the incident
+    was created. Safe to call repeatedly: already-notified users are
+    skipped by the Notification Engine's idempotency check.
     """
     obj = crud.incident.get(db, incident_id)
     if obj is None:
         raise HTTPException(status_code=404, detail="Incident not found")
 
-    notifications = generate_notifications_for_incident(db, obj)
-    await _broadcast_notifications(notifications, obj.id)
-    return notifications
+    return await _notify(db, obj)
 
 
 @router.patch("/{incident_id}", response_model=IncidentRead)
