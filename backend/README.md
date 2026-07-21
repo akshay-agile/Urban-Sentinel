@@ -487,6 +487,68 @@ verified, with a mocked Firebase send, that both the success path
 (`status: sent`, `sent_at` set) and failure path (`status: failed`) work
 correctly.
 
+## Session 11 — AI Engine (Rule-Based Incident Classification)
+
+No new dependencies. This is the session where incidents finally get
+created **automatically** from real sensor data — every session before
+this required a manual `POST /api/v1/incidents/` (via `/docs`, or the
+mobile/dashboard workaround) to make anything happen. Not anymore.
+
+### Design choice: rules, not a black-box model
+
+`app/services/incident_engine.py` classifies every incoming reading with
+fixed, explainable thresholds — not a trained ML model. This is
+deliberate: for a life-safety system, being able to point at *exactly*
+why an alert fired matters more than marginal accuracy gains from a
+model nobody can audit under pressure. It also matches the original
+project brief's own framing — rule-based logic first, ML explicitly
+optional/future.
+
+| Type | Trigger | Severity scales with |
+|---|---|---|
+| Fire | `flame=1` AND `temperature≥50` | temperature |
+| Gas Leak | `gas≥500` | gas concentration |
+| Flood | `water_level≥50` | water level |
+| Explosion | `sound≥95` (no vibration needed) | sound level |
+| Structural Damage | `vibration=1` AND `sound≥65` (below explosion threshold) | sound level |
+| Temperature Spike | `temperature≥45` AND `flame≠1` | temperature |
+
+Thresholds are tuned to match the Session 4 simulator's six modes
+exactly — switching the simulator to `fire` mode reliably produces a
+`fire` incident, not a coin-flip.
+
+### Wired into the MQTT pipeline, not the REST API
+
+`app/services/incident_dispatch.py` runs right after every reading is
+persisted (`app/mqtt/subscriber.py`) — classify → check for an existing
+active incident of that type on that device → create (or escalate
+severity on) it → run the exact same Radius Engine → Notification Engine
+→ Push Delivery → WebSocket broadcast pipeline as the manual endpoint
+(Sessions 9-10), just triggered automatically instead of by a human.
+
+**Deduplication**: a persisting condition (e.g. a fire still burning across
+many 5-second readings) does **not** spawn a new incident or re-notify
+everyone each time — it's recognized as the same ongoing incident.
+Severity *does* escalate in place if a later reading is worse, but
+escalation doesn't trigger a second round of notifications (a
+deliberately conservative choice to avoid notification spam — worth
+revisiting if you want "it's getting worse" alerts later).
+
+**No auto-resolve**: the engine never marks an incident resolved on its
+own, even once readings return to normal — resolving stays a manual/
+authority action (`PATCH /api/v1/incidents/{id}` with `status: resolved`,
+already in the dashboard).
+
+Tested end-to-end before delivery: unit-tested all 6 classification
+rules against the simulator's actual value ranges (all correct), then
+ran full integration tests over a real MQTT broker — confirmed a normal
+reading creates nothing, a fire-range reading auto-creates an incident
+*and* a notification with zero manual steps, a second similar reading
+from the same device does NOT duplicate either, and a subsequent
+much-worse reading correctly escalates the existing incident's severity
+(broadcasting `incident_updated`) without creating a duplicate or
+re-notifying.
+
 ## Structure (updated — Session 6)
 
 ```

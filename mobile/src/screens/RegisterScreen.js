@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { useAuth } from '../context/AuthContext';
+import { parseApiError } from '../api/parseApiError';
 
 export default function RegisterScreen({ navigation }) {
   const { register } = useAuth();
@@ -35,8 +36,7 @@ export default function RegisterScreen({ navigation }) {
     try {
       await register({ fullName, email: email.trim().toLowerCase(), password, phoneNumber });
     } catch (err) {
-      const detail = err?.response?.data?.detail;
-      setError(detail || 'Registration failed. Check your connection and try again.');
+      setError(parseApiError(err, 'Registration failed. Check your connection and try again.'));
     } finally {
       setIsSubmitting(false);
     }

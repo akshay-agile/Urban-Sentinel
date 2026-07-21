@@ -80,6 +80,23 @@ Session 3 subscriber on first message) and publishes independently —
 useful for a live demo showing multiple incidents/locations on the
 dashboard map at once (Session 7).
 
+## Full end-to-end demo (Session 11 onward)
+
+With the backend, PostgreSQL, Mosquitto, and a registered mobile user
+(with location + notification permission granted) all running, switch
+this simulator to `fire` mode:
+
+```
+fire
+```
+
+No manual steps needed from here — the whole pipeline runs automatically:
+sensor reading published → backend's Incident Engine classifies it →
+incident created → Radius Engine matches nearby registered users →
+Notification Engine generates alerts → real push (Android) or a live
+WebSocket-triggered local notification (iOS) arrives, and the dashboard
+updates within a second or two, all from one mode switch.
+
 ## Verify it's reaching the backend
 
 With PostgreSQL, the Mosquitto broker, and the backend subscriber running

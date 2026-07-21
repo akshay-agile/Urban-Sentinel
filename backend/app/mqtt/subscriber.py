@@ -10,6 +10,9 @@ Listens on urban_sentinel/sensors/# and, for every message:
   4. (Session 8) If a broadcast callback is registered, schedules a live
      event so connected WebSocket clients (dashboard, mobile) find out
      immediately instead of waiting for their next poll.
+  5. (Session 11) Runs the Incident Engine against the reading —
+     automatic classification, deduplication, and (via Sessions 9-10)
+     notification generation + delivery, with zero manual steps.
 
 Runs two ways:
   - Standalone: `python -m app.mqtt.subscriber` (Sessions 3-7 workflow,
@@ -33,6 +36,7 @@ from app import crud
 from app.db.session import SessionLocal
 from app.mqtt.client import build_client, connect
 from app.mqtt.topics import wildcard_topic
+from app.services.incident_dispatch import evaluate_and_dispatch
 
 logger = logging.getLogger("urban_sentinel.mqtt.subscriber")
 
@@ -124,6 +128,18 @@ def _persist_reading(data: dict) -> None:
                 "timestamp": data["timestamp"],
             }
         )
+
+        # Session 11: automatic incident classification runs on every
+        # reading, right after it's persisted. No-op if nothing abnormal
+        # is detected.
+        incident = evaluate_and_dispatch(db, device, data, _broadcast)
+        if incident is not None:
+            logger.info(
+                "Incident Engine: %s (severity=%s) for device %s",
+                incident.incident_type.value,
+                incident.severity.value,
+                data["device_id"],
+            )
     finally:
         db.close()
 
