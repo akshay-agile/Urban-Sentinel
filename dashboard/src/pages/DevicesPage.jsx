@@ -17,15 +17,15 @@ export default function DevicesPage() {
   const deviceList = devices || [];
 
   return (
-    <div className="p-8">
-      <h2 className="text-2xl font-bold mb-1">Devices</h2>
-      <p className="text-slate-500 text-sm mb-6">
+    <div className="p-8 max-w-7xl">
+      <h2 className="text-2xl font-bold text-ink mb-1">Devices</h2>
+      <p className="text-ink-soft text-sm mb-6">
         Every registered sensor node. "Live" means a reading was received in the last 15 seconds.
       </p>
 
-      {error && <p className="text-red-400 mb-4">Couldn't load devices. Is the backend running?</p>}
+      {error && <p className="text-danger mb-4">Couldn't load devices. Is the backend running?</p>}
       {isLoading ? (
-        <p className="text-slate-500">Loading…</p>
+        <p className="text-ink-muted">Loading…</p>
       ) : (
         <>
           <div className="mb-6">

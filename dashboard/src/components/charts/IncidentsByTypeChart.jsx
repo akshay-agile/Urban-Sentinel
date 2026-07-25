@@ -23,23 +23,37 @@ export default function IncidentsByTypeChart({ incidents }) {
       {
         label: 'Incidents',
         data: Object.values(counts),
-        backgroundColor: '#dc2626',
-        borderRadius: 4,
+        backgroundColor: '#2563EB',
+        borderRadius: 6,
+        maxBarThickness: 40,
       },
     ],
   };
 
   const options = {
     responsive: true,
-    plugins: { legend: { display: false } },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1E293B',
+        padding: 10,
+        cornerRadius: 8,
+        titleFont: { family: 'Inter' },
+        bodyFont: { family: 'Inter' },
+      },
+    },
     scales: {
-      x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
-      y: { ticks: { color: '#94a3b8', stepSize: 1 }, grid: { color: '#1e293b' }, beginAtZero: true },
+      x: { ticks: { color: '#64748B', font: { family: 'Inter', size: 12 } }, grid: { display: false } },
+      y: {
+        ticks: { color: '#64748B', stepSize: 1, font: { family: 'Inter', size: 12 } },
+        grid: { color: '#E2E8F0' },
+        beginAtZero: true,
+      },
     },
   };
 
   if (incidents.length === 0) {
-    return <p className="text-slate-600 text-sm py-8 text-center">No incident data yet.</p>;
+    return <p className="text-ink-muted text-sm py-8 text-center">No incident data yet.</p>;
   }
 
   return <Bar data={data} options={options} />;

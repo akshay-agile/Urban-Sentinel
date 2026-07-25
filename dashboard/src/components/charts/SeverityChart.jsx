@@ -5,10 +5,10 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 const SEVERITY_ORDER = ['low', 'medium', 'high', 'critical'];
 const SEVERITY_COLORS = {
-  low: '#22c55e',
-  medium: '#eab308',
-  high: '#f97316',
-  critical: '#dc2626',
+  low: '#10B981',
+  medium: '#F59E0B',
+  high: '#F97316',
+  critical: '#EF4444',
 };
 
 export default function SeverityChart({ incidents }) {
@@ -23,21 +23,32 @@ export default function SeverityChart({ incidents }) {
       {
         data: SEVERITY_ORDER.map((s) => counts[s]),
         backgroundColor: SEVERITY_ORDER.map((s) => SEVERITY_COLORS[s]),
-        borderColor: '#0f172a',
-        borderWidth: 2,
+        borderColor: '#FFFFFF',
+        borderWidth: 3,
       },
     ],
   };
 
   const options = {
     responsive: true,
+    cutout: '65%',
     plugins: {
-      legend: { position: 'bottom', labels: { color: '#94a3b8' } },
+      legend: {
+        position: 'bottom',
+        labels: { color: '#64748B', font: { family: 'Inter', size: 12 }, padding: 16, usePointStyle: true, pointStyle: 'circle' },
+      },
+      tooltip: {
+        backgroundColor: '#1E293B',
+        padding: 10,
+        cornerRadius: 8,
+        titleFont: { family: 'Inter' },
+        bodyFont: { family: 'Inter' },
+      },
     },
   };
 
   if (incidents.length === 0) {
-    return <p className="text-slate-600 text-sm py-8 text-center">No incident data yet.</p>;
+    return <p className="text-ink-muted text-sm py-8 text-center">No incident data yet.</p>;
   }
 
   return <Doughnut data={data} options={options} />;

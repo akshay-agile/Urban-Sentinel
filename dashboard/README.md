@@ -3,6 +3,13 @@
 React + Vite + TailwindCSS + Leaflet + Chart.js. Internal tool for
 authorities — **not** the primary product (that's `mobile/`).
 
+**Design system**: light theme, Deep Blue (`#2563EB`) primary / Emerald
+(`#10B981`) secondary, Inter typeface, Lucide icons — see
+`tailwind.config.js` for the full token set (`primary`, `secondary`,
+`surface`, `card`, `ink`, `line`, `danger`, `warning`, `success`, `info`).
+Every component uses these theme classes rather than raw hex values, so
+retheming later stays a one-file change.
+
 ## Windows setup (PowerShell)
 
 ```powershell

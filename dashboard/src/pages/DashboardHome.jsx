@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { Radio, Activity, AlertTriangle, Zap } from 'lucide-react';
 
 import { getDevices, getActiveIncidents } from '../api/endpoints';
 import { usePolling } from '../api/usePolling';
@@ -17,8 +18,6 @@ export default function DashboardHome() {
     5000
   );
 
-  // Session 8: instead of waiting for the next poll tick, refetch the
-  // instant a relevant live event arrives over the WebSocket.
   useLiveSocket((event) => {
     if (event.type === 'sensor_reading' || event.type === 'device_registered') refreshDevices();
     if (event.type === 'incident_created' || event.type === 'incident_updated') refreshIncidents();
@@ -32,22 +31,24 @@ export default function DashboardHome() {
   );
 
   return (
-    <div className="p-8">
-      <h2 className="text-2xl font-bold mb-1">Overview</h2>
-      <p className="text-slate-500 text-sm mb-6">Live status across every registered sensor node and active incident.</p>
+    <div className="p-8 max-w-7xl">
+      <h2 className="text-2xl font-bold text-ink mb-1">Overview</h2>
+      <p className="text-ink-soft text-sm mb-6">Live status across every registered sensor node and active incident.</p>
 
       {isLoading ? (
-        <p className="text-slate-500">Loading…</p>
+        <p className="text-ink-muted">Loading…</p>
       ) : (
         <>
           <div className="grid grid-cols-4 gap-4 mb-6">
-            <StatCard label="Registered Devices" value={deviceList.length} />
-            <StatCard label="Live Now" value={liveDevices.length} accent="text-green-400" />
-            <StatCard label="Active Incidents" value={incidentList.length} accent="text-red-400" />
+            <StatCard label="Registered Devices" value={deviceList.length} icon={Radio} tone="primary" />
+            <StatCard label="Live Now" value={liveDevices.length} accent="text-success" icon={Activity} tone="success" />
+            <StatCard label="Active Incidents" value={incidentList.length} accent="text-danger" icon={AlertTriangle} tone="danger" />
             <StatCard
               label="Critical"
               value={incidentList.filter((i) => i.severity === 'critical').length}
-              accent="text-red-500"
+              accent="text-danger"
+              icon={Zap}
+              tone="danger"
             />
           </div>
 
@@ -55,7 +56,7 @@ export default function DashboardHome() {
             <IncidentMap devices={deviceList} incidents={incidentList} height="420px" />
           </div>
 
-          <h3 className="text-lg font-semibold mb-3">Active Incidents</h3>
+          <h3 className="text-lg font-semibold text-ink mb-3">Active Incidents</h3>
           <IncidentTable incidents={incidentList} onChanged={refreshIncidents} />
         </>
       )}

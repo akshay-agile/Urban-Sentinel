@@ -96,7 +96,24 @@ def _persist_reading(data: dict) -> None:
             logger.info("Auto-registered new device: %s", data["device_id"])
             _broadcast({"type": "device_registered", "device_id": data["device_id"]})
 
-        crud.device.update(db, db_obj=device, obj_in={"last_seen_at": datetime.now(timezone.utc)})
+        crud.device.update(
+            db,
+            db_obj=device,
+            obj_in={
+                "last_seen_at": datetime.now(timezone.utc),
+                # Keep the device's stored location in sync with what it's
+                # actually reporting. Previously this only got set once at
+                # first registration and never updated again — harmless
+                # for a real fixed sensor node that never moves, but
+                # confusing during testing/simulation, where re-pointing a
+                # device's coordinates (e.g. correcting a wrong .env
+                # value) silently had no effect on already-registered
+                # devices, since every incident uses the device's stored
+                # location, not the raw reading's.
+                "latitude": data["latitude"],
+                "longitude": data["longitude"],
+            },
+        )
 
         crud.sensor_reading.create(
             db,

@@ -8,10 +8,19 @@ import AlertsScreen from '../screens/AlertsScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import { colors } from '../theme';
 
 const Tab = createBottomTabNavigator();
 const HomeStackNav = createNativeStackNavigator();
 const ProfileStackNav = createNativeStackNavigator();
+
+const stackHeaderOptions = {
+  headerShown: true,
+  headerStyle: { backgroundColor: colors.card },
+  headerTintColor: colors.textPrimary,
+  headerTitleStyle: { fontWeight: '700' },
+  headerShadowVisible: true,
+};
 
 function HomeStack() {
   return (
@@ -20,7 +29,7 @@ function HomeStack() {
       <HomeStackNav.Screen
         name="NearbyIncidents"
         component={NearbyIncidentsScreen}
-        options={{ headerShown: true, title: 'Nearby Incidents', headerStyle: { backgroundColor: '#0f172a' }, headerTintColor: '#fff' }}
+        options={{ ...stackHeaderOptions, title: 'Nearby Incidents' }}
       />
     </HomeStackNav.Navigator>
   );
@@ -30,11 +39,7 @@ function ProfileStack() {
   return (
     <ProfileStackNav.Navigator screenOptions={{ headerShown: false }}>
       <ProfileStackNav.Screen name="ProfileMain" component={ProfileScreen} />
-      <ProfileStackNav.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{ headerShown: true, title: 'Settings', headerStyle: { backgroundColor: '#0f172a' }, headerTintColor: '#fff' }}
-      />
+      <ProfileStackNav.Screen name="Settings" component={SettingsScreen} options={{ ...stackHeaderOptions, title: 'Settings' }} />
     </ProfileStackNav.Navigator>
   );
 }
@@ -51,11 +56,19 @@ export default function MainTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarStyle: { backgroundColor: '#0f172a', borderTopColor: '#1e293b' },
-        tabBarActiveTintColor: '#dc2626',
-        tabBarInactiveTintColor: '#64748b',
-        tabBarIcon: ({ color, size }) => (
-          <Ionicons name={ICONS[route.name]} size={size} color={color} />
+        tabBarStyle: {
+          backgroundColor: colors.card,
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
+          height: 60,
+          paddingTop: 6,
+          paddingBottom: 8,
+        },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarIcon: ({ color, size, focused }) => (
+          <Ionicons name={focused ? ICONS[route.name] : `${ICONS[route.name]}-outline`} size={size - 2} color={color} />
         ),
       })}
     >

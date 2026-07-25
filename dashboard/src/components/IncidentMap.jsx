@@ -25,10 +25,10 @@ const incidentIcon = new L.Icon({
 });
 
 const SEVERITY_RADIUS_COLOR = {
-  low: '#22c55e',
-  medium: '#eab308',
-  high: '#f97316',
-  critical: '#dc2626',
+  low: '#10B981',
+  medium: '#F59E0B',
+  high: '#F97316',
+  critical: '#EF4444',
 };
 
 const DEFAULT_CENTER = [12.9716, 77.5946]; // Bengaluru — matches the default simulator/docs coordinates
@@ -41,7 +41,7 @@ export default function IncidentMap({ devices = [], incidents = [], height = '40
   const center = points.length > 0 ? points[0] : DEFAULT_CENTER;
 
   return (
-    <div style={{ height }} className="rounded-xl overflow-hidden border border-slate-800">
+    <div style={{ height }} className="rounded-2xl overflow-hidden border border-line shadow-card">
       <MapContainer center={center} zoom={13} style={{ height: '100%', width: '100%' }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -66,8 +66,9 @@ export default function IncidentMap({ devices = [], incidents = [], height = '40
               center={[incident.latitude, incident.longitude]}
               radius={incident.radius_meters}
               pathOptions={{
-                color: SEVERITY_RADIUS_COLOR[incident.severity] || '#dc2626',
-                fillOpacity: 0.15,
+                color: SEVERITY_RADIUS_COLOR[incident.severity] || '#EF4444',
+                fillOpacity: 0.12,
+                weight: 2,
               }}
             />
             <Marker position={[incident.latitude, incident.longitude]} icon={incidentIcon}>

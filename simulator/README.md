@@ -18,6 +18,29 @@ zero changes either way.
 | `structural_damage` | `vibration=1` **and** loud `sound` |
 | `temperature_spike` | High temperature but `flame=0` (distinguishes from fire) |
 
+## Location
+
+**Set your real coordinates in `.env`** (`LATITUDE`/`LONGITUDE`) —
+whatever your mobile account is registered at (check `GET
+/api/v1/auth/me`). This is the reliable default; the simulator uses it
+automatically, no flags needed.
+
+**IP-based auto-detection exists but is opt-in, not default** — in
+testing, it placed a Bengaluru user in Mumbai, ~840km off. IP
+geolocation identifies your ISP's registered routing point, not your
+physical location, and can be off by an entire city depending on your
+provider. If you want to try it anyway:
+```powershell
+python main.py --auto-locate
+```
+Always double-check the printed coordinates look right before trusting
+them.
+
+**Manual override for a single run:**
+```powershell
+python main.py --lat 13.076 --lon 77.563
+```
+
 ## Windows setup (PowerShell)
 
 ```powershell

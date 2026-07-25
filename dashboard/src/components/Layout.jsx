@@ -1,52 +1,66 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import { ShieldCheck, LayoutDashboard, Radio, AlertTriangle, BarChart3, Circle } from 'lucide-react';
 
 import { useLiveSocket } from '../api/useLiveSocket';
 
 const NAV_ITEMS = [
-  { to: '/', label: 'Overview', end: true },
-  { to: '/devices', label: 'Devices' },
-  { to: '/incidents', label: 'Incidents' },
-  { to: '/analytics', label: 'Analytics' },
+  { to: '/', label: 'Overview', end: true, icon: LayoutDashboard },
+  { to: '/devices', label: 'Devices', icon: Radio },
+  { to: '/incidents', label: 'Incidents', icon: AlertTriangle },
+  { to: '/analytics', label: 'Analytics', icon: BarChart3 },
 ];
 
 export default function Layout() {
   // No-op handler — this instance exists purely to show connection status
   // in the sidebar; each page also connects its own instance to react to
-  // events. Multiple WebSocket connections from one tab is fine at this
-  // scale.
+  // events.
   const { isConnected } = useLiveSocket(() => {});
 
   return (
-    <div className="flex h-screen bg-slate-950 text-white">
-      <aside className="w-56 shrink-0 border-r border-slate-800 flex flex-col">
-        <div className="px-5 py-6">
-          <h1 className="text-lg font-bold">Urban Sentinel</h1>
-          <p className="text-xs text-slate-500 mt-1">Authority Dashboard</p>
+    <div className="flex h-screen bg-surface text-ink">
+      <aside className="w-60 shrink-0 border-r border-line bg-card flex flex-col">
+        <div className="flex items-center gap-2.5 px-5 py-6">
+          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shrink-0">
+            <ShieldCheck size={18} className="text-white" />
+          </div>
+          <div>
+            <h1 className="text-sm font-bold text-ink leading-tight">Urban Sentinel</h1>
+            <p className="text-xs text-ink-muted leading-tight">Authority Dashboard</p>
+          </div>
         </div>
+
         <nav className="flex-1 px-3 space-y-1">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) =>
-                `block px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive ? 'bg-red-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                }`
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  `flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                    isActive ? 'bg-primary-soft text-primary' : 'text-ink-soft hover:bg-surface hover:text-ink'
+                  }`
+                }
+              >
+                <Icon size={17} strokeWidth={2.2} />
+                {item.label}
+              </NavLink>
+            );
+          })}
         </nav>
-        <div className="px-5 py-4 border-t border-slate-800">
+
+        <div className="px-5 py-4 border-t border-line">
           <div className="flex items-center gap-2 text-xs">
-            <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-slate-600'}`} />
-            <span className={isConnected ? 'text-green-400' : 'text-slate-500'}>
+            <Circle
+              size={8}
+              className={isConnected ? 'text-success fill-success animate-pulse' : 'text-ink-muted fill-ink-muted'}
+            />
+            <span className={isConnected ? 'text-success font-medium' : 'text-ink-muted'}>
               {isConnected ? 'Live feed connected' : 'Live feed offline (polling)'}
             </span>
           </div>
-          <p className="text-xs text-slate-600 mt-2">v0.1.0 · Session 8</p>
+          <p className="text-xs text-ink-muted mt-2">v0.1.0</p>
         </div>
       </aside>
       <main className="flex-1 overflow-y-auto">

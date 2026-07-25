@@ -7,7 +7,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "backgroundColor": "#0f172a"
+      "backgroundColor": "#F8FAFC"
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {

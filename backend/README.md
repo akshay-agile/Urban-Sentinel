@@ -549,6 +549,19 @@ much-worse reading correctly escalates the existing incident's severity
 (broadcasting `incident_updated`) without creating a duplicate or
 re-notifying.
 
+### Bug fix: device location was frozen at first registration
+
+Previously, a device's stored `latitude`/`longitude` was only ever set
+**once**, when it first auto-registered — every reading after that only
+updated `last_seen_at`, never the location. This is harmless for a real,
+physically fixed sensor node, but confusing during testing: correcting
+a wrong `.env` coordinate on the simulator had no effect on an
+already-registered device ID, since incidents use the *device's stored*
+location, not the raw reading's. Fixed — device location now stays in
+sync with the latest reading. If you hit this, restart your simulator
+(with correct `.env` coordinates) and let one reading through; the
+existing device record will self-correct.
+
 ## Structure (updated — Session 6)
 
 ```

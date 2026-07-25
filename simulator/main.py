@@ -6,9 +6,10 @@ frozen schema (docs/sensor_json_schema.md) on
 urban_sentinel/sensors/{device_id} every `PUBLISH_INTERVAL_SECONDS`.
 
 Usage:
-    python main.py                          # normal mode, defaults from .env
+    python main.py                          # normal mode, uses LATITUDE/LONGITUDE from .env
     python main.py --mode fire               # start directly in fire mode
-    python main.py --device-id fire_node_2 --lat 12.98 --lon 77.60
+    python main.py --lat 12.98 --lon 77.60   # manual location override, this run only
+    python main.py --auto-locate              # try IP geolocation instead (approximate, opt-in)
 
 While running, type a mode name and press Enter to switch live, without
 restarting:
@@ -25,6 +26,7 @@ import time
 from datetime import datetime, timezone
 
 from config import settings
+from location import detect_location
 from modes import Mode, generate_reading
 from mqtt_client import build_and_connect, topic_for
 
@@ -79,9 +81,34 @@ def main() -> None:
     parser.add_argument("--device-id", default=settings.device_id)
     parser.add_argument("--mode", default=Mode.normal.value, choices=sorted(_VALID_MODE_NAMES))
     parser.add_argument("--interval", type=float, default=settings.publish_interval_seconds)
-    parser.add_argument("--lat", type=float, default=settings.latitude)
-    parser.add_argument("--lon", type=float, default=settings.longitude)
+    parser.add_argument(
+        "--lat", type=float, default=None, help="Override latitude for this run only"
+    )
+    parser.add_argument(
+        "--lon", type=float, default=None, help="Override longitude for this run only"
+    )
+    parser.add_argument(
+        "--auto-locate",
+        action="store_true",
+        help="Try IP-based geolocation instead of the .env default. Approximate — can be off by "
+        "an entire city depending on your ISP's routing, so this is opt-in, not the default.",
+    )
     args = parser.parse_args()
+
+    if args.lat is not None and args.lon is not None:
+        latitude, longitude = args.lat, args.lon
+        print(f"Using manually specified location: ({latitude}, {longitude})")
+    elif args.auto_locate:
+        detected = detect_location()
+        if detected is not None:
+            latitude, longitude = detected
+            print(f"Using auto-detected location: ({latitude}, {longitude}) — verify this looks right!")
+        else:
+            latitude, longitude = settings.latitude, settings.longitude
+            print(f"Auto-detection failed; using configured default from .env: ({latitude}, {longitude})")
+    else:
+        latitude, longitude = settings.latitude, settings.longitude
+        print(f"Using location from .env: ({latitude}, {longitude})")
 
     state = SimulatorState(Mode(args.mode))
     stop_event = threading.Event()
@@ -92,13 +119,13 @@ def main() -> None:
     listener = threading.Thread(target=_input_listener, args=(state, stop_event), daemon=True)
     listener.start()
 
-    print(f"Simulator running as '{args.device_id}' at ({args.lat}, {args.lon})")
+    print(f"Simulator running as '{args.device_id}' at ({latitude}, {longitude})")
     print(f"Publishing to '{topic}' every {args.interval}s, starting in '{args.mode}' mode")
     print("Type a mode name + Enter to switch live, or 'quit' to stop.\n")
 
     try:
         while not stop_event.is_set():
-            payload = build_payload(args.device_id, args.lat, args.lon, state.get_mode())
+            payload = build_payload(args.device_id, latitude, longitude, state.get_mode())
             client.publish(topic, json.dumps(payload))
             print(f"[{payload['timestamp']}] mode={state.get_mode().value} -> {payload}")
             stop_event.wait(args.interval)

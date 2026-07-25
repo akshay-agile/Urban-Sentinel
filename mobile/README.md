@@ -1,7 +1,13 @@
 # Mobile — Urban Sentinel (Citizen App)
 
-React Native app built with **Expo SDK 52**. This is the **primary
+React Native app built with **Expo SDK 54**. This is the **primary
 product** — the app citizens install to receive emergency alerts.
+
+**Design system**: light theme, Deep Blue (`#2563EB`) primary / Emerald
+(`#10B981`) secondary — see `src/theme.js` for the full token set
+(colors, spacing, radius, typography, shadows). Every screen imports
+from there instead of hardcoding values, matching the dashboard's design
+language so both products clearly belong to the same system.
 
 ## Windows setup (PowerShell)
 
