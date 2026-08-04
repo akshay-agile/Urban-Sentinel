@@ -7,6 +7,7 @@ import { useLiveSocket } from '../api/useLiveSocket';
 import StatCard from '../components/StatCard';
 import IncidentMap from '../components/IncidentMap';
 import IncidentTable from '../components/IncidentTable';
+import ActivityFeed from '../components/ActivityFeed';
 
 export default function DashboardHome() {
   const devicesFetcher = useCallback(() => getDevices(), []);
@@ -52,8 +53,16 @@ export default function DashboardHome() {
             />
           </div>
 
-          <div className="mb-6">
-            <IncidentMap devices={deviceList} incidents={incidentList} height="420px" />
+          {/* Fix (3): two-column layout — map paired with a live activity
+              feed, so the page reflects the actual amount of system
+              activity happening instead of reading as mostly empty. */}
+          <div className="grid grid-cols-3 gap-6 mb-6">
+            <div className="col-span-2">
+              <IncidentMap devices={deviceList} incidents={incidentList} height="420px" />
+            </div>
+            <div className="col-span-1">
+              <ActivityFeed />
+            </div>
           </div>
 
           <h3 className="text-lg font-semibold text-ink mb-3">Active Incidents</h3>

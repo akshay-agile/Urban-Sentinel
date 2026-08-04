@@ -562,6 +562,38 @@ sync with the latest reading. If you hit this, restart your simulator
 (with correct `.env` coordinates) and let one reading through; the
 existing device record will self-correct.
 
+## Notification content: personalized distance/direction + actionable guidance
+
+Prompted by feedback that "Fire alarm within 800m radius" tells a
+recipient nothing useful — no sense of where relative to them, and no
+guidance on what to actually do. Fixed on both fronts:
+
+- **Personalized distance & direction**: each notification now states
+  the *recipient's own* distance and compass direction to the incident
+  (e.g. "about 350m northeast of you"), computed from their registered
+  location — not a generic restatement of the incident's alert radius,
+  which says nothing about where the person themselves is standing.
+- **Concrete safety guidance**: each incident type carries specific,
+  actionable instructions (e.g. fire → "don't use elevators, follow
+  evacuation routes"; gas leak → "don't use open flames or switches,
+  move upwind") rather than a generic "stay safe."
+
+See `app/services/notification_content.py` (message building),
+`app/services/geo.py` (bearing/compass-direction calculation, alongside
+the existing haversine distance), and `app/services/notification_engine.py`
+(now returns each user's distance alongside their notification, so the
+message can actually be personalized instead of shared/generic).
+
+No mobile app changes needed — it already displays whatever
+title/body arrives over the WebSocket event; this is a pure backend
+content improvement.
+
+Tested end-to-end before delivery: verified bearing calculation against
+all four cardinal directions, confirmed personalized vs. generic-fallback
+message wording, and ran the full pipeline over a real broker/WebSocket
+connection to confirm the actual delivered content includes both a
+correct distance/direction phrase and incident-appropriate guidance.
+
 ## Structure (updated — Session 6)
 
 ```

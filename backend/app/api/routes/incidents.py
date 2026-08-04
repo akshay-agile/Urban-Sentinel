@@ -20,28 +20,34 @@ async def _notify(db: Session, incident) -> list:
     Runs the Radius Engine, generates notifications, attempts real
     delivery (FCM for Android via Session 10, best-effort mark-sent for
     iOS local), and broadcasts a WebSocket event per notification —
-    complete with title/body so the mobile client can fire a local
-    notification without an extra API round-trip.
+    complete with a personalized title/body (each recipient's own
+    distance/direction, not a generic radius statement) so the mobile
+    client can fire a local notification without an extra API round-trip.
     """
-    notifications = generate_notifications_for_incident(db, incident)
-    deliver_notifications(db, notifications, incident)
+    dispatched = generate_notifications_for_incident(db, incident)
+    deliver_notifications(db, dispatched, incident)
 
-    if notifications:
-        title, body = build_notification_content(incident)
-        for n in notifications:
-            await ws_manager.broadcast(
-                {
-                    "type": "notification_created",
-                    "id": n.id,
-                    "user_id": n.user_id,
-                    "incident_id": incident.id,
-                    "channel": n.channel.value,
-                    "status": n.status.value,
-                    "title": title,
-                    "body": body,
-                }
-            )
-    return notifications
+    for item in dispatched:
+        n = item.notification
+        title, body = build_notification_content(
+            incident,
+            distance_meters=item.distance_meters,
+            user_latitude=item.user_latitude,
+            user_longitude=item.user_longitude,
+        )
+        await ws_manager.broadcast(
+            {
+                "type": "notification_created",
+                "id": n.id,
+                "user_id": n.user_id,
+                "incident_id": incident.id,
+                "channel": n.channel.value,
+                "status": n.status.value,
+                "title": title,
+                "body": body,
+            }
+        )
+    return dispatched
 
 
 @router.get("/", response_model=list[IncidentRead])

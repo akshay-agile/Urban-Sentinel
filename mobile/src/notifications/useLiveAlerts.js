@@ -46,6 +46,9 @@ export function useLiveAlerts() {
             content: {
               title: data.title || 'Urban Sentinel Alert',
               body: data.body || 'An emergency has been reported near you.',
+              // Explicit sound — without this, some Android/iOS versions
+              // deliver silently even with the channel/handler configured.
+              sound: 'default',
               data: { incidentId: data.incident_id },
             },
             trigger: null, // fire immediately

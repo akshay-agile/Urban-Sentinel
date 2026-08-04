@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import * as api from '../api/endpoints';
+import { useLiveSocket } from '../api/useLiveSocket';
 import { colors, radius, severityColors, shadow, spacing, typography } from '../theme';
 
 const INCIDENT_ICONS = {
@@ -15,10 +16,10 @@ const INCIDENT_ICONS = {
   explosion: 'nuclear',
 };
 
-function IncidentCard({ incident }) {
+function IncidentCard({ incident, onPress }) {
   const sev = severityColors[incident.severity] || severityColors.medium;
   return (
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.cardTop}>
         <View style={styles.iconWrap}>
           <Ionicons name={INCIDENT_ICONS[incident.incident_type] || 'alert-circle'} size={20} color={colors.primary} />
@@ -33,12 +34,15 @@ function IncidentCard({ incident }) {
           <Text style={[styles.severityText, { color: sev.fg }]}>{incident.severity}</Text>
         </View>
       </View>
-      <Text style={styles.timestamp}>Detected {new Date(incident.detected_at).toLocaleString()}</Text>
-    </View>
+      <View style={styles.cardBottom}>
+        <Text style={styles.timestamp}>Detected {new Date(incident.detected_at).toLocaleString()}</Text>
+        <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+      </View>
+    </TouchableOpacity>
   );
 }
 
-export default function NearbyIncidentsScreen() {
+export default function NearbyIncidentsScreen({ navigation }) {
   const [incidents, setIncidents] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -52,6 +56,12 @@ export default function NearbyIncidentsScreen() {
       setError("Couldn't load incidents. Check your connection.");
     }
   }, []);
+
+  useLiveSocket((event) => {
+    if (event.type === 'incident_created' || event.type === 'incident_updated') {
+      load();
+    }
+  });
 
   useFocusEffect(
     useCallback(() => {
@@ -77,7 +87,9 @@ export default function NearbyIncidentsScreen() {
       <FlatList
         data={incidents}
         keyExtractor={(item) => String(item.id)}
-        renderItem={({ item }) => <IncidentCard incident={item} />}
+        renderItem={({ item }) => (
+          <IncidentCard incident={item} onPress={() => navigation.navigate('IncidentDetail', { incidentId: item.id })} />
+        )}
         contentContainerStyle={styles.list}
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         ListEmptyComponent={
@@ -122,7 +134,8 @@ const styles = StyleSheet.create({
   detail: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
   severityBadge: { paddingHorizontal: spacing.sm, paddingVertical: 4, borderRadius: radius.full },
   severityText: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
-  timestamp: { ...typography.small, color: colors.textMuted, marginTop: spacing.md },
+  cardBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.md },
+  timestamp: { ...typography.small, color: colors.textMuted },
   empty: { alignItems: 'center', marginTop: 60, gap: spacing.md },
   emptyText: { color: colors.textSecondary, fontSize: 14 },
 });

@@ -83,19 +83,28 @@ def _send_fcm(push_token: str, title: str, body: str, data: dict) -> bool:
         return False
 
 
-def deliver_notifications(db: Session, notifications: list[Notification], incident: Incident) -> None:
+def deliver_notifications(db: Session, dispatched: list, incident: Incident) -> None:
     """
     Attempts real delivery for every notification just created by the
-    Notification Engine (Session 9). Updates each row's status/sent_at
-    accordingly. Safe to call even if Firebase isn't configured — fcm
-    notifications are simply left pending in that case, with a warning.
+    Notification Engine (Session 9/11 personalization update). Each
+    person gets a message personalized to their own distance/direction
+    from the incident, not a generic one. Updates each row's
+    status/sent_at accordingly. Safe to call even if Firebase isn't
+    configured — fcm notifications are simply left pending in that case,
+    with a warning.
     """
-    if not notifications:
+    if not dispatched:
         return
 
-    title, body = build_notification_content(incident)
+    for item in dispatched:
+        notification = item.notification
+        title, body = build_notification_content(
+            incident,
+            distance_meters=item.distance_meters,
+            user_latitude=item.user_latitude,
+            user_longitude=item.user_longitude,
+        )
 
-    for notification in notifications:
         if notification.channel == NotificationChannelEnum.fcm:
             if not _firebase_ready:
                 logger.warning(
@@ -118,9 +127,10 @@ def deliver_notifications(db: Session, notifications: list[Notification], incide
                 },
             )
         else:
-            # local channel — the WebSocket broadcast (already sent by
-            # the caller) is the actual delivery mechanism; this is a
-            # best-effort status update, not a delivery receipt.
+            # local channel — the WebSocket broadcast (sent by the
+            # caller, using this same personalized title/body) is the
+            # actual delivery mechanism; this is a best-effort status
+            # update, not a delivery receipt.
             crud.notification.update(
                 db,
                 db_obj=notification,

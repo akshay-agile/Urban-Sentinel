@@ -1,16 +1,9 @@
 /**
  * Urban Sentinel — Mobile Design System
  *
- * Light theme only, per the redesign spec. Deep Blue primary, Emerald
- * secondary, calm neutral surfaces. Every screen imports from here
- * instead of hardcoding colors, so the whole app stays visually
- * consistent and easy to retheme later if needed.
- *
- * Font note: using system fonts (San Francisco on iOS, Roboto on
- * Android) rather than bundling Inter/Poppins via expo-font — visually
- * close to the spec's suggestions and avoids an extra native asset
- * dependency. Swapping in @expo-google-fonts/inter later is a drop-in
- * change if ever wanted, isolated to this one file.
+ * Light theme. Home is map-first (a live spatial view is the actual
+ * interface, not a card stack) — see HomeScreen.js. Deliberately no dark
+ * "hero" surface anymore; that treatment was tried and dropped.
  */
 
 export const colors = {

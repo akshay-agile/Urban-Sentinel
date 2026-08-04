@@ -81,20 +81,25 @@ def evaluate_and_dispatch(db: Session, device: Device, reading: dict, broadcast:
     notifications = generate_notifications_for_incident(db, incident)
     deliver_notifications(db, notifications, incident)
 
-    if notifications:
-        title, body = build_notification_content(incident)
-        for n in notifications:
-            broadcast(
-                {
-                    "type": "notification_created",
-                    "id": n.id,
-                    "user_id": n.user_id,
-                    "incident_id": incident.id,
-                    "channel": n.channel.value,
-                    "status": n.status.value,
-                    "title": title,
-                    "body": body,
-                }
-            )
+    for item in notifications:
+        n = item.notification
+        title, body = build_notification_content(
+            incident,
+            distance_meters=item.distance_meters,
+            user_latitude=item.user_latitude,
+            user_longitude=item.user_longitude,
+        )
+        broadcast(
+            {
+                "type": "notification_created",
+                "id": n.id,
+                "user_id": n.user_id,
+                "incident_id": incident.id,
+                "channel": n.channel.value,
+                "status": n.status.value,
+                "title": title,
+                "body": body,
+            }
+        )
 
     return incident
