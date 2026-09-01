@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Urban Sentinel CCTV</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #111827;
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #9ca3af;
+            margin-bottom: 20px;
+        }
+
+        video {
+            width: 100%;
+            max-width: 600px;
+            border-radius: 12px;
+            background: black;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        #start {
+            background: #22c55e;
+            color: white;
+        }
+
+        #stop {
+            background: #ef4444;
+            color: white;
+            display: none;
+        }
+
+        #status {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        #result {
+            margin-top: 15px;
+            color: #60a5fa;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🚨 Urban Sentinel</h1>
+
+    <div class="subtitle">
+        CCTV Camera Simulation
+    </div>
+
+    <video id="video" autoplay playsinline></video>
+
+    <br>
+
+    <button id="start">
+        Start Camera
+    </button>
+
+    <button id="stop">
+        Stop Camera
+    </button>
+
+    <div id="status">
+        Camera stopped
+    </div>
+
+    <div id="result">
+        Waiting...
+    </div>
+
+    <canvas id="canvas" style="display:none;"></canvas>
+
+<script>
+
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+
+const startButton = document.getElementById("start");
+const stopButton = document.getElementById("stop");
+
+const statusText = document.getElementById("status");
+const resultText = document.getElementById("result");
+
+let stream = null;
+let interval = null;
+
+const BACKEND_URL =
+    `${window.location.protocol}//${window.location.hostname}:8000`;
+
+
+async function startCamera() {
+
+    try {
+
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: "environment"
+            },
+            audio: false
+        });
+
+        video.srcObject = stream;
+
+        statusText.textContent =
+            "🟢 Camera running";
+
+        startButton.style.display = "none";
+        stopButton.style.display = "inline-block";
+
+        interval = setInterval(sendFrame, 500);
+
+    } catch (error) {
+
+        console.error(error);
+
+        statusText.textContent =
+            "❌ Camera permission failed";
+
+        resultText.textContent =
+            error.message;
+    }
+}
+
+
+function stopCamera() {
+
+    if (interval) {
+        clearInterval(interval);
+        interval = null;
+    }
+
+    if (stream) {
+
+        stream.getTracks().forEach(
+            track => track.stop()
+        );
+
+        stream = null;
+    }
+
+    video.srcObject = null;
+
+    statusText.textContent =
+        "Camera stopped";
+
+    startButton.style.display = "inline-block";
+    stopButton.style.display = "none";
+}
+
+
+async function sendFrame() {
+
+    if (!stream || video.readyState < 2) {
+        return;
+    }
+
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext("2d");
+
+    context.drawImage(
+        video,
+        0,
+        0,
+        width,
+        height
+    );
+
+    canvas.toBlob(
+        async (blob) => {
+
+            if (!blob) {
+                return;
+            }
+
+            const formData = new FormData();
+
+            formData.append(
+                "file",
+                blob,
+                "camera.jpg"
+            );
+
+            try {
+
+                const response = await fetch(
+                    `${BACKEND_URL}/api/v1/camera/frame`,
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+
+                const data =
+                    await response.json();
+
+                resultText.textContent =
+                    `Frame received: ${data.size_bytes} bytes`;
+
+            } catch (error) {
+
+                console.error(error);
+
+                resultText.textContent =
+                    "❌ Backend connection failed";
+            }
+
+        },
+        "image/jpeg",
+        0.75
+    );
+}
+
+
+startButton.addEventListener(
+    "click",
+    startCamera
+);
+
+stopButton.addEventListener(
+    "click",
+    stopCamera
+);
+
+</script>
+
+</body>
+</html>

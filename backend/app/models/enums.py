@@ -20,6 +20,7 @@ class IncidentTypeEnum(str, enum.Enum):
     fire = "fire"
     gas_leak = "gas_leak"
     flood = "flood"
+    accident = "accident"
     structural_damage = "structural_damage"
     temperature_spike = "temperature_spike"
     explosion = "explosion"
