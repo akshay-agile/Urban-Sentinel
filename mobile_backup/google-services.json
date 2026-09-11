@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "265054926756",
+    "project_id": "urban-sentinel-1457b",
+    "storage_bucket": "urban-sentinel-1457b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:265054926756:android:853008393f4d51b5003331",
+        "android_client_info": {
+          "package_name": "com.urbansentinel.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA2Sr7nW2EZo4dn4Z4IIOlzq80tegDgND8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

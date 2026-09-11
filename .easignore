@@ -1,0 +1,12 @@
+backend/
+dashboard/
+hardware/
+docs/
+mobile/node_modules/
+mobile/.expo/
+mobile/.eas-inspect*
+mobile/android/.gradle/
+mobile/android/build/
+mobile/android/app/build/
+*.log
+.git/

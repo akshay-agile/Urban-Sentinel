@@ -1,0 +1,29 @@
+# Keep the EAS archive rooted at this app directory and exclude generated data.
+/node_modules/
+/.expo/
+/.eas-inspect/
+/.git/
+/dist/
+/web-build/
+
+# These are repository-level directories and must never enter the mobile archive.
+/backend/
+/dashboard/
+/hardware/
+/docs/
+/simulator/
+/mobile_backup/
+
+# Native build output and Gradle caches are not uploaded to EAS.
+/android/.gradle/
+/android/build/
+/android/app/build/
+
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+.env
+GoogleService-Info.plist
+*.log

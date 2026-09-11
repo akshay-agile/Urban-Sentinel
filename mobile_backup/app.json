@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Urban Sentinel",
+    "slug": "urban-sentinel",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#F8FAFC"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.urbansentinel.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Urban Sentinel uses your location to alert you about nearby emergencies."
+      }
+    },
+    "android": {
+      "package": "com.urbansentinel.app",
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "NOTIFICATIONS"
+      ]
+    },
+    "plugins": ["expo-notifications"]
+  }
+}
