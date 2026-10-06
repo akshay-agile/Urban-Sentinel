@@ -121,7 +121,7 @@ async def recompute_notifications(incident_id: int, db: Session = Depends(get_db
     if obj is None:
         raise HTTPException(status_code=404, detail="Incident not found")
 
-    return await _notify(db, obj)
+    return [item.notification for item in await _notify(db, obj)]
 
 
 @router.patch("/{incident_id}", response_model=IncidentRead)

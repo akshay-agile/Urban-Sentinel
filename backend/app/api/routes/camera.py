@@ -1,6 +1,17 @@
+import asyncio
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, File, UploadFile
+import cv2
+import numpy as np
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from sqlalchemy.orm import Session
+
+from app import crud
+from app.ai.inference import run_inference, classify_visual_detection
+from app.api.deps import get_db
+from app.services.incident_dispatch import dispatch_classification
+from app.ws.manager import manager as ws_manager
+
 
 router = APIRouter(
     prefix="/camera",
@@ -9,19 +20,96 @@ router = APIRouter(
 
 
 @router.post("/frame")
-async def receive_frame(file: UploadFile = File(...)):
-    """
-    Receives a JPEG frame from the demo CCTV/phone camera.
+async def receive_frame(
+    device_id: str = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    """Process a camera frame and dispatch any detected incident."""
 
-    AI inference will be added in the next stage.
-    """
+    device = crud.device.get_by_device_id(db, device_id=device_id)
+
+    if device is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Camera device not found. Register it first.",
+        )
+
+    if not device.is_active:
+        raise HTTPException(
+            status_code=400,
+            detail="Camera device is inactive.",
+        )
 
     data = await file.read()
 
+    if not data:
+        raise HTTPException(status_code=400, detail="Empty image")
+
+    image_array = np.frombuffer(data, dtype=np.uint8)
+    frame = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
+
+    if frame is None:
+        raise HTTPException(status_code=400, detail="Invalid image")
+
+    results = run_inference(frame)
+
+    detections = []
+
+    for model_key, result in results.items():
+        for box in result[0].boxes:
+            class_id = int(box.cls[0])
+            confidence = float(box.conf[0])
+
+            detections.append({
+                "model": model_key,
+                "class": result[0].names[class_id],
+                "confidence": round(confidence, 4),
+            })
+
+    classification = classify_visual_detection(detections)
+    incident = None
+
+    if classification is not None:
+
+        def broadcast(event: dict) -> None:
+            asyncio.create_task(ws_manager.broadcast(event))
+
+        incident = dispatch_classification(
+            db=db,
+            device=device,
+            classification=classification,
+            broadcast=broadcast,
+        )
+
     return {
         "received": True,
+        "device_id": device.device_id,
         "filename": file.filename,
         "content_type": file.content_type,
         "size_bytes": len(data),
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "detections": detections,
+        "classification": (
+            {
+                "incident_type": classification.incident_type.value,
+                "severity": classification.severity.value,
+                "radius_meters": classification.radius_meters,
+            }
+            if classification
+            else None
+        ),
+        "incident": (
+            {
+                "id": incident.id,
+                "incident_type": incident.incident_type.value,
+                "severity": incident.severity.value,
+                "latitude": incident.latitude,
+                "longitude": incident.longitude,
+                "radius_meters": incident.radius_meters,
+                "status": incident.status.value,
+            }
+            if incident
+            else None
+        ),
     }
