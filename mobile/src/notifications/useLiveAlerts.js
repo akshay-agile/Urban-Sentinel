@@ -9,14 +9,13 @@ const WS_URL = API_BASE_URL.replace(/\/api\/v1\/?$/, '').replace(/^http/, 'ws') 
 const RECONNECT_DELAY_MS = 3000;
 
 /**
- * Listens to the backend's live event feed (Session 8) and fires a local
- * notification whenever a notification_created event names this user.
+ * Listens to the backend's live event feed and fires a local notification
+ * only for the local channel addressed to this user. Android's fcm channel
+ * is displayed by FCM/Expo and must not also be scheduled locally.
  *
  * This is the ENTIRE iOS delivery mechanism (foreground-only, per the
  * Session 6/10 decision) — there is no APNs/remote push involved at all.
- * It also gives Android a near-instant experience while the app happens
- * to already be open; Android's actual background/closed-app delivery
- * comes independently from real FCM push (Session 10 backend), not this.
+ * Android foreground and background delivery both use its FCM channel.
  *
  * Only connects while logged in; disconnects on logout.
  */

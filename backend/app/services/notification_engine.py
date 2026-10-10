@@ -5,9 +5,9 @@ Runs the Radius Engine for an incident, then creates a Notification row
 for every matched user — channel chosen per the Session 6/10 architecture
 decision (Android -> fcm, background-capable; iOS -> local, foreground-only).
 
-Safe to call more than once for the same incident: users who already have
-a notification for it are skipped, so re-running (e.g. via the manual
-/notify endpoint) never creates duplicates.
+Safe to call more than once for the same incident: delivered notifications
+are skipped, and pending/failed FCM rows can be retried without creating a
+second row for that recipient.
 
 Returns each notification alongside the matched user's distance/location,
 so callers can build a personalized message (see notification_content.py)

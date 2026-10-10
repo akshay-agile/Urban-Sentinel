@@ -1,9 +1,9 @@
 import unittest
+from unittest.mock import patch
 
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from unittest.mock import patch
 
 from app.db.base import Base
 from app.models.device import Device

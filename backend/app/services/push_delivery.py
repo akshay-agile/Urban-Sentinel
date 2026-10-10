@@ -86,8 +86,8 @@ def _send_fcm(push_token: str, title: str, body: str, data: dict) -> bool:
 
 def deliver_notifications(db: Session, dispatched: list, incident: Incident) -> None:
     """
-    Attempts real delivery for every notification just created by the
-    Notification Engine (Session 9/11 personalization update). Each
+    Attempts real delivery for every new notification or eligible retry
+    returned by the Notification Engine. Each
     person gets a message personalized to their own distance/direction
     from the incident, not a generic one. Updates each row's
     status/sent_at accordingly. Safe to call even if Firebase isn't
