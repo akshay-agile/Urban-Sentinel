@@ -16,10 +16,11 @@ person; knowing "you're 350m northeast of it" does.
 """
 from dataclasses import dataclass
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app import crud
-from app.models.enums import NotificationChannelEnum, PlatformEnum
+from app.models.enums import NotificationChannelEnum, NotificationStatusEnum, PlatformEnum
 from app.models.incident import Incident
 from app.models.notification import Notification
 from app.services.radius_engine import find_users_in_radius
@@ -45,14 +46,53 @@ def generate_notifications_for_incident(db: Session, incident: Incident) -> list
     created: list[DispatchedNotification] = []
 
     for match in nearby:
-        if crud.notification.get_by_user_and_incident(db, user_id=match.user.id, incident_id=incident.id):
-            continue
-
         channel = _channel_for_platform(match.user.platform)
-        notification = crud.notification.create(
-            db,
-            obj_in={"user_id": match.user.id, "incident_id": incident.id, "channel": channel},
+        notification = crud.notification.get_by_user_and_incident(
+            db, user_id=match.user.id, incident_id=incident.id
         )
+
+        if notification is not None:
+            # Failed/pending FCM rows are eligible for an explicit retry via
+            # /incidents/{id}/notify. Sent rows never enter delivery again.
+            if (
+                notification.channel != NotificationChannelEnum.fcm
+                or notification.status not in {
+                    NotificationStatusEnum.pending,
+                    NotificationStatusEnum.failed,
+                }
+            ):
+                continue
+        else:
+            notification = Notification(
+                user_id=match.user.id,
+                incident_id=incident.id,
+                channel=channel,
+            )
+            try:
+                # The unique constraint is the cross-process idempotency
+                # guard. The savepoint lets a concurrent winner commit while
+                # this request safely reads the already-created row.
+                with db.begin_nested():
+                    db.add(notification)
+                    db.flush()
+            except IntegrityError:
+                notification = crud.notification.get_by_user_and_incident(
+                    db, user_id=match.user.id, incident_id=incident.id
+                )
+                if notification is None:
+                    raise
+                if (
+                    notification.channel != NotificationChannelEnum.fcm
+                    or notification.status not in {
+                        NotificationStatusEnum.pending,
+                        NotificationStatusEnum.failed,
+                    }
+                ):
+                    continue
+            else:
+                db.commit()
+                db.refresh(notification)
+
         created.append(
             DispatchedNotification(
                 notification=notification,

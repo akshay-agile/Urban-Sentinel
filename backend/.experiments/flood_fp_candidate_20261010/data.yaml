@@ -1,0 +1,12 @@
+path: "D:/Akshay/major project/Project/urban-sentinel/backend/.experiments/flood_fp_candidate_20261010"
+train:
+  - "D:/Akshay/major project/Project/urban-sentinel/backend/.experiments/flood_fp_candidate_20261010/source/train/images"
+  - "D:/Akshay/major project/Project/urban-sentinel/backend/.experiments/flood_fp_candidate_20261010/train/images"
+val:
+  - "D:/Akshay/major project/Project/urban-sentinel/backend/.experiments/flood_fp_candidate_20261010/source/valid/images"
+  - "D:/Akshay/major project/Project/urban-sentinel/backend/.experiments/flood_fp_candidate_20261010/val/images"
+test: "D:/Akshay/major project/Project/urban-sentinel/backend/.experiments/flood_fp_candidate_20261010/source/test/images"
+nc: 2
+names:
+  0: Flood
+  1: Waterlogging

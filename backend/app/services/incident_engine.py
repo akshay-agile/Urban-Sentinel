@@ -15,7 +15,7 @@ Thresholds are written to match the exact value ranges the Session 4
 simulator's six modes produce (see simulator/modes.py) — so simulated
 data reliably triggers the right incident type end-to-end.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from app.models.enums import IncidentTypeEnum, SeverityEnum
 
@@ -37,6 +37,8 @@ class Classification:
     incident_type: IncidentTypeEnum
     severity: SeverityEnum
     radius_meters: float
+    severity_reason: str | None = None
+    severity_features: dict[str, int | float | dict[str, int]] = field(default_factory=dict)
 
 
 def _severity_from_scale(value: float, medium: float, high: float, critical: float) -> SeverityEnum:

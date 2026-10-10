@@ -6,7 +6,8 @@
  *
  * Example: 'http://192.168.1.42:8000/api/v1'
  */
-export const API_BASE_URL = 'http://192.168.1.5:8000/api/v1';
+// export const API_BASE_URL = 'http://172.16.24.94:8000/api/v1';
+export const API_BASE_URL = 'http://192.168.1.7:8000/api/v1';
 // export const API_BASE_URL = 'http://172.20.10.3:8000/api/v1'; monish iphone
 // export const API_BASE_URL = 'http://192.168.7.91:8000/api/v1'; 
 // export const API_BASE_URL = 'http://172.16.12.119:8000/api/v1'; 

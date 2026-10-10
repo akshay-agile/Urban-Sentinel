@@ -44,6 +44,52 @@ Expected response:
 {"status": "ok", "service": "urban-sentinel-backend", "env": "development"}
 ```
 
+## Real-time RTSP camera client
+
+The client captures RTSP frames, JPEG-encodes sampled frames, and posts them to
+the existing camera API. YOLO inference and incident processing remain in the
+backend. Use separate PowerShell terminals for the backend, stream publisher,
+and client.
+
+Start the backend from the repository's `backend` directory:
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+MediaMTX v1.21.1 is placed in `backend/tools/mediamtx`. Its checked-in-project
+config is copied from the existing `D:\Akshay\major project\Project\Models\flood\mediamtx.yml`;
+the config validates with the required `urban-sentinel-direct` path. Start it
+from the repository root:
+
+```powershell
+.\backend\tools\mediamtx\mediamtx.exe .\backend\tools\mediamtx\mediamtx.yml
+```
+
+In another PowerShell terminal, publish the iPhone stream (requires FFmpeg on
+PATH and the phone reachable at its current RTSP address):
+
+```powershell
+ffmpeg -rtsp_transport tcp `
+  -i "rtsp://172.16.15.160:554/stream" `
+  -an -c:v libx264 -preset ultrafast -tune zerolatency `
+  -f rtsp -rtsp_transport tcp `
+  "rtsp://127.0.0.1:8554/urban-sentinel-direct"
+```
+
+Run the client from `backend`. Defaults are the MediaMTX URL above, backend
+`http://localhost:8000/api/v1`, device `camera_1`, and 2 submissions per second:
+
+```powershell
+.\.venv\Scripts\python.exe .\scripts\realtime_camera_client.py
+```
+
+Override settings with flags or environment variables (`URBAN_SENTINEL_RTSP_URL`,
+`URBAN_SENTINEL_BACKEND_URL`, `URBAN_SENTINEL_DEVICE_ID`,
+`URBAN_SENTINEL_SAMPLE_FPS`). For a bounded 20-second run, add `--duration 20`.
+Stop an unbounded run with Ctrl+C. The client reconnects to RTSP after failures
+and continues after backend request errors.
+
 Interactive API docs: http://localhost:8000/docs
 
 ## Structure

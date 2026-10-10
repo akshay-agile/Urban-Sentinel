@@ -30,15 +30,29 @@ export async function registerForPushNotifications() {
   }
 
   if (Platform.OS === 'android') {
+    let tokenResponse;
     try {
-      const tokenResponse = await Notifications.getDevicePushTokenAsync();
-      await api.updateMe({ push_token: tokenResponse.data, platform: 'android' });
+      tokenResponse = await Notifications.getDevicePushTokenAsync();
     } catch (err) {
       return {
         granted: true,
         error:
-          'Could not get a push token — this usually means the app is running in Expo Go instead of ' +
-          'a development build. Background push requires a dev build (see mobile/README.md, Session 10).',
+          'Could not get a push token. This usually means Expo Go is in use; background push requires a development build.',
+      };
+    }
+
+    const token = tokenResponse?.data;
+    if (typeof token !== 'string' || token.length === 0) {
+      return { granted: true, error: 'The device did not return a valid FCM token.' };
+    }
+
+    try {
+      await api.updateMe({ push_token: token, platform: 'android' });
+    } catch (err) {
+      console.error('Push token registration failed:', err.response?.status || err.message);
+      return {
+        granted: true,
+        error: 'The device token was obtained, but the server could not save it. Please try again.',
       };
     }
   } else {

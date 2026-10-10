@@ -32,7 +32,6 @@ export async function configureNotificationHandler() {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'Emergency Alerts',
       importance: Notifications.AndroidImportance.MAX,
-      sound: 'default',
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#EF4444',
       bypassDnd: true,

@@ -19,6 +19,7 @@ mobile/README.md and backend/README.md).
 import logging
 from datetime import datetime, timezone
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import crud
@@ -97,7 +98,18 @@ def deliver_notifications(db: Session, dispatched: list, incident: Incident) -> 
         return
 
     for item in dispatched:
-        notification = item.notification
+        notification = db.scalar(
+            select(Notification)
+            .where(Notification.id == item.notification.id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
+        if notification is None or notification.status in {
+            NotificationStatusEnum.sent,
+            NotificationStatusEnum.read,
+        }:
+            continue
+
         title, body = build_notification_content(
             incident,
             distance_meters=item.distance_meters,

@@ -3,6 +3,7 @@ import * as Notifications from 'expo-notifications';
 
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../config';
+const shouldScheduleLocalNotification = require('./shouldScheduleLocalNotification');
 
 const WS_URL = API_BASE_URL.replace(/\/api\/v1\/?$/, '').replace(/^http/, 'ws') + '/ws';
 const RECONNECT_DELAY_MS = 3000;
@@ -41,14 +42,13 @@ export function useLiveAlerts() {
           return; // ignore malformed messages
         }
 
-        if (data.type === 'notification_created' && data.user_id === user.id) {
+        if (shouldScheduleLocalNotification(data, user.id)) {
           Notifications.scheduleNotificationAsync({
             content: {
               title: data.title || 'Urban Sentinel Alert',
               body: data.body || 'An emergency has been reported near you.',
               // Explicit sound — without this, some Android/iOS versions
               // deliver silently even with the channel/handler configured.
-              sound: 'default',
               data: { incidentId: data.incident_id },
             },
             trigger: null, // fire immediately

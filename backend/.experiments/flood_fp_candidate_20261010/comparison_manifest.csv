@@ -1,0 +1,28 @@
+path,group,ground_truth
+D:\evaluation\ordinary_camera\IMG_8608.JPG,ordinary_heldout,manually_verified_ordinary
+D:\evaluation\ordinary_camera\IMG_8611.JPG,ordinary_heldout,manually_verified_ordinary
+D:\evaluation\ordinary_camera\IMG_8614.JPG,ordinary_heldout,manually_verified_ordinary
+D:\evaluation\ordinary_camera\IMG_8615.JPG,ordinary_heldout,manually_verified_ordinary
+D:\evaluation\ordinary_camera\IMG_8630.JPG,ordinary_heldout,manually_verified_ordinary
+D:\evaluation\ordinary_camera\IMG_8635.JPG,ordinary_heldout,manually_verified_ordinary
+D:\evaluation\ordinary_camera\IMG_8639.JPG,ordinary_heldout,manually_verified_ordinary
+D:\Akshay\major project\Project\Models\flood\dataset\final\test\images\10rain2_jpg.rf.dd65179f6a22535f64bf97387ff47423.jpg,flood_test_sample,Flood
+D:\Akshay\major project\Project\Models\flood\dataset\final\test\images\139440384_16026842354281n_jpg.rf.79cfb2706df0569e429533ce0bd18f2e.jpg,flood_test_sample,Flood
+D:\Akshay\major project\Project\Models\flood\dataset\final\test\images\1628102800_mon_jpg.rf.7f0a2b86259cd115eaf2b837e864f526.jpg,flood_test_sample,Flood
+D:\Akshay\major project\Project\Models\flood\dataset\final\test\images\25441112_jpg.rf.9b75dc0d96d68fdc5654f8179f89186a.jpg,flood_test_sample,Flood
+D:\Akshay\major project\Project\Models\flood\dataset\final\test\images\25441113_jpg.rf.52af12af06e49c6865e35ef583e9231b.jpg,flood_test_sample,Flood
+D:\Akshay\major project\Project\Models\flood\dataset\final\test\images\25441115_jpg.rf.17653dc2acdcda73c0032ffbfd79e80e.jpg,flood_test_sample,Flood
+D:\Akshay\major project\Project\Models\flood\dataset\final\test\images\25441162_jpg.rf.83733fe367f8081de02429ffff9e4fa5.jpg,flood_test_sample,Flood
+D:\Akshay\major project\Project\Models\flood\dataset\final\test\images\26451508_jpg.rf.ff681d54a812d6464ec7a02ca3a976e7.jpg,flood_test_sample,Flood
+D:\Akshay\major project\Project\Models\flood\dataset\final\test\images\26451509_jpg.rf.a5d446989df120c0f27a6783498e9c8d.jpg,flood_test_sample,Flood
+D:\Akshay\major project\Project\Models\flood\dataset\final\test\images\26451514_jpg.rf.fe3d43de3e5f45817fe744068349d156.jpg,flood_test_sample,Flood
+D:\Akshay\major project\Project\Models\flood\dataset\final\test\images\26451520_jpg.rf.3d35368717e15020574f9f54fc98cfea.jpg,flood_test_sample,Waterlogging
+D:\Akshay\major project\Project\Models\flood\dataset\final\test\images\26454140_jpg.rf.bff64e48e9fc2e20a253026270afbab8.jpg,flood_test_sample,Waterlogging
+D:\Akshay\major project\Project\Models\flood\dataset\final\test\images\26458011_jpg.rf.8d97b376a4e3e83f694895596caeb0a3.jpg,flood_test_sample,Waterlogging
+D:\Akshay\major project\Project\Models\flood\dataset\final\test\images\26458038_jpg.rf.fa43420bd75dee4df3f52ce2c958cf0c.jpg,flood_test_sample,Waterlogging
+D:\Akshay\major project\Project\Models\flood\dataset\final\test\images\26459099_jpg.rf.6e4dcbbb3911c92ff76a920fdc71da6f.jpg,flood_test_sample,Waterlogging
+D:\Akshay\major project\Project\Models\flood\dataset\final\test\images\26459141_jpg.rf.6a56388b42c1210e85c6b550044d1909.jpg,flood_test_sample,Waterlogging
+D:\Akshay\major project\Project\Models\flood\dataset\final\test\images\26459641_jpg.rf.5d0935a24cf908c4e19f53dd4d14b87c.jpg,flood_test_sample,Waterlogging
+D:\Akshay\major project\Project\Models\flood\dataset\final\test\images\26459996_jpg.rf.af1eda602bbe881d3ad792aaa0c458c0.jpg,flood_test_sample,Waterlogging
+D:\Akshay\major project\Project\Models\flood\dataset\final\test\images\26460097_jpg.rf.ba82256e029cd4c4ff00c7ac09f1da4b.jpg,flood_test_sample,Waterlogging
+D:\Akshay\major project\Project\Models\flood\dataset\final\test\images\26460109_jpg.rf.3856980747fd2b8a0e42e1b0d2977dde.jpg,flood_test_sample,Waterlogging

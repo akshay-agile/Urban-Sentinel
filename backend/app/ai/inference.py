@@ -1,5 +1,6 @@
 from .model_manager import fire_model, flood_model, accident_model
-from app.models.enums import IncidentTypeEnum, SeverityEnum
+from app.ai.visual_severity import assess_visual_severity
+from app.models.enums import IncidentTypeEnum
 from app.services.incident_engine import Classification
 
 
@@ -32,6 +33,24 @@ def run_inference(frame):
     }
 
 
+def is_qualified_hazard_detection(detection):
+    """Return whether a raw model box qualifies as an Urban Sentinel hazard."""
+    model = detection["model"]
+    detected_class = detection["class"].lower()
+    confidence = detection["confidence"]
+    threshold = MODEL_THRESHOLDS.get(model)
+
+    if threshold is None or confidence < threshold:
+        return False
+
+    accepted_classes = {
+        "fire": {"fire", "smoke"},
+        "flood": {"flood", "waterlogging"},
+        "accident": {"accident"},
+    }
+    return detected_class in accepted_classes.get(model, set())
+
+
 def classify_visual_detection(detections):
     """
     Convert AI detections into an Urban Sentinel incident classification.
@@ -50,51 +69,39 @@ def classify_visual_detection(detections):
     for detection in detections:
 
         model = detection["model"]
-        detected_class = detection["class"].lower()
-        confidence = detection["confidence"]
-
-        threshold = MODEL_THRESHOLDS.get(model)
-
-        if threshold is None or confidence < threshold:
+        if not is_qualified_hazard_detection(detection):
             continue
 
-        if model == "accident" and detected_class == "accident":
-            candidates["accident"].append(confidence)
+        if model == "accident":
+            candidates["accident"].append(detection)
 
-        elif model == "flood" and detected_class in {"flood", "waterlogging"}:
-            candidates["flood"].append(confidence)
+        elif model == "flood":
+            candidates["flood"].append(detection)
 
-        elif model == "fire" and detected_class in {"fire", "smoke"}:
-            candidates["fire"].append(confidence)
+        elif model == "fire":
+            candidates["fire"].append(detection)
 
     # Accident gets priority because the accident model is
     # specifically trained for accident detection and we observed
     # cross-model false positives on accident images.
     if candidates["accident"]:
-        confidence = max(candidates["accident"])
         incident_type = IncidentTypeEnum.accident
 
     elif candidates["flood"]:
-        confidence = max(candidates["flood"])
         incident_type = IncidentTypeEnum.flood
 
     elif candidates["fire"]:
-        confidence = max(candidates["fire"])
         incident_type = IncidentTypeEnum.fire
 
     else:
         return None
 
-    # Explainable severity mapping.
-    if confidence >= 0.80:
-        severity = SeverityEnum.high
-    elif confidence >= 0.65:
-        severity = SeverityEnum.medium
-    else:
-        severity = SeverityEnum.low
+    assessment = assess_visual_severity(incident_type, candidates[incident_type.value])
 
     return Classification(
         incident_type=incident_type,
-        severity=severity,
+        severity=assessment.severity,
         radius_meters=DEFAULT_RADIUS_METERS[incident_type],
+        severity_reason=assessment.reason,
+        severity_features=assessment.features,
     )
