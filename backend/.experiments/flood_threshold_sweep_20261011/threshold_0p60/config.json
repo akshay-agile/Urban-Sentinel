@@ -1,0 +1,13 @@
+{
+  "threshold": 0.6,
+  "production_threshold": 0.65,
+  "weights": "Models/flood/runs/yolo11n_flood_waterlogging-3/weights/best.pt",
+  "class_mapping": {
+    "0": "Flood",
+    "1": "Waterlogging"
+  },
+  "data_source_csv": ".experiments\\flood_accuracy_audit_20261011\\predictions.csv",
+  "manifest": ".experiments\\flood_threshold_sweep_20261011\\manifest.csv",
+  "inference_rerun": false,
+  "confidence_precision": "Six decimal places from the saved evaluator CSV"
+}

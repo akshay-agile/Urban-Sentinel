@@ -1,10 +1,12 @@
-import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
+import { useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import { INCIDENT_TYPE_COLORS, SEVERITY_COLORS } from '../theme';
 
 // react-leaflet's default marker icon path breaks under Vite's bundling —
 // this is the standard fix, pointing Leaflet at the bundled asset URLs.
@@ -15,34 +17,54 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-const incidentIcon = new L.Icon({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  className: 'incident-marker',
-});
+function incidentIcon(incident, selected) {
+  const color = INCIDENT_TYPE_COLORS[incident.incident_type] || '#A7B7CC';
+  return new L.DivIcon({
+    html: `<span class="ops-map-marker${selected ? ' ops-map-marker--selected' : ''}" style="--marker-color:${color}"><span class="ops-map-marker-dot"></span></span>`,
+    className: 'ops-map-marker-shell',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+  });
+}
 
-const SEVERITY_RADIUS_COLOR = {
-  low: '#10B981',
-  medium: '#F59E0B',
-  high: '#F97316',
-  critical: '#EF4444',
-};
+const DEFAULT_CENTER = [12.9716, 77.5946]; // Existing Bengaluru fallback used by the dashboard and simulator.
 
-const DEFAULT_CENTER = [12.9716, 77.5946]; // Bengaluru — matches the default simulator/docs coordinates
+function MapViewport({ center, selectedIncident }) {
+  const map = useMap();
 
-export default function IncidentMap({ devices = [], incidents = [], height = '400px' }) {
+  useEffect(() => {
+    if (selectedIncident) {
+      map.flyTo(
+        [selectedIncident.latitude, selectedIncident.longitude],
+        Math.max(15, map.getZoom()),
+        { duration: 0.35 }
+      );
+      return;
+    }
+    map.setView(center, map.getZoom(), { animate: false });
+  }, [center[0], center[1], map, selectedIncident?.id, selectedIncident?.latitude, selectedIncident?.longitude]);
+
+  return null;
+}
+
+export default function IncidentMap({
+  devices = [],
+  incidents = [],
+  height = '400px',
+  selectedIncidentId = null,
+  onIncidentSelect,
+}) {
   const points = [
     ...devices.map((d) => [d.latitude, d.longitude]),
     ...incidents.map((i) => [i.latitude, i.longitude]),
   ];
   const center = points.length > 0 ? points[0] : DEFAULT_CENTER;
+  const selectedIncident = incidents.find((incident) => incident.id === selectedIncidentId) || null;
 
   return (
     <div style={{ height }} className="rounded-2xl overflow-hidden border border-line shadow-card">
       <MapContainer center={center} zoom={13} style={{ height: '100%', width: '100%' }}>
+        <MapViewport center={center} selectedIncident={selectedIncident} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -66,12 +88,16 @@ export default function IncidentMap({ devices = [], incidents = [], height = '40
               center={[incident.latitude, incident.longitude]}
               radius={incident.radius_meters}
               pathOptions={{
-                color: SEVERITY_RADIUS_COLOR[incident.severity] || '#EF4444',
-                fillOpacity: 0.12,
-                weight: 2,
+                color: SEVERITY_COLORS[incident.severity] || SEVERITY_COLORS.critical,
+                fillOpacity: incident.id === selectedIncidentId ? 0.18 : 0.1,
+                weight: incident.id === selectedIncidentId ? 4 : 2,
               }}
             />
-            <Marker position={[incident.latitude, incident.longitude]} icon={incidentIcon}>
+            <Marker
+              position={[incident.latitude, incident.longitude]}
+              icon={incidentIcon(incident, incident.id === selectedIncidentId)}
+              eventHandlers={{ click: () => onIncidentSelect?.(incident.id) }}
+            >
               <Popup>
                 <strong className="capitalize">{incident.incident_type.replace('_', ' ')}</strong>
                 <br />

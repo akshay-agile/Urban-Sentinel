@@ -4,9 +4,12 @@
     "slug": "urban-sentinel",
     "version": "0.1.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "automatic",
+    "icon": "./assets/urban-sentinel-icon.png",
+    "userInterfaceStyle": "dark",
     "splash": {
+      "image": "./assets/urban-sentinel-icon.png",
+      "imageWidth": 180,
+      "resizeMode": "contain",
       "backgroundColor": "#F8FAFC"
     },
     "assetBundlePatterns": [

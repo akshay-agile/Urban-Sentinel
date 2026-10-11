@@ -46,9 +46,11 @@ export default function RootNavigator() {
               headerShown: true,
               title: 'Incident Details',
               presentation: 'modal',
-              headerStyle: { backgroundColor: colors.card },
+              headerStyle: { backgroundColor: colors.background },
               headerTintColor: colors.textPrimary,
               headerTitleStyle: { fontWeight: '700' },
+              headerShadowVisible: false,
+              headerBackTitleVisible: false,
             }}
           />
         </RootStack.Navigator>

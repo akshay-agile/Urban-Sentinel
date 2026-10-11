@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { parseApiError } from '../api/parseApiError';
 import { colors, radius, shadow, spacing, typography } from '../theme';
+import { BrandMark, Screen } from '../components/UI';
 
 export default function RegisterScreen({ navigation }) {
   const { register } = useAuth();
@@ -46,12 +47,11 @@ export default function RegisterScreen({ navigation }) {
   };
 
   return (
+    <Screen edges={['top', 'bottom']}>
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.brand}>
-          <View style={styles.logoCircle}>
-            <Ionicons name="person-add" size={28} color={colors.white} />
-          </View>
+          <BrandMark size={62}/>
           <Text style={styles.title}>Create Account</Text>
           <Text style={styles.subtitle}>Register to get emergency alerts for your area</Text>
         </View>
@@ -110,23 +110,14 @@ export default function RegisterScreen({ navigation }) {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  scroll: { flexGrow: 1, justifyContent: 'center', padding: spacing.xxl },
+  scroll: { flexGrow: 1, justifyContent: 'center', padding: spacing.xl, maxWidth: 560, width: '100%', alignSelf: 'center' },
   brand: { alignItems: 'center', marginBottom: spacing.xxl },
-  logoCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.full,
-    backgroundColor: colors.secondary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.lg,
-    ...shadow.raised,
-  },
   title: { ...typography.h1, color: colors.textPrimary },
   subtitle: { ...typography.body, color: colors.textSecondary, marginTop: spacing.xs, textAlign: 'center' },
   form: {

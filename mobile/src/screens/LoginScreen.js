@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -14,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { parseApiError } from '../api/parseApiError';
 import { colors, radius, shadow, spacing, typography } from '../theme';
+import { BrandMark, Screen } from '../components/UI';
 
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
@@ -39,14 +41,11 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <Screen edges={['top', 'bottom']}>
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
       <View style={styles.brand}>
-        <View style={styles.logoCircle}>
-          <Ionicons name="shield-checkmark" size={30} color={colors.white} />
-        </View>
+        <BrandMark size={70}/>
         <Text style={styles.title}>Urban Sentinel</Text>
         <Text style={styles.subtitle}>Sign in to receive emergency alerts</Text>
       </View>
@@ -90,23 +89,16 @@ export default function LoginScreen({ navigation }) {
           </Text>
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, justifyContent: 'center', padding: spacing.xxl },
+  container: { flex: 1 },
+  scroll: { flexGrow: 1, justifyContent: 'center', padding: spacing.xl, maxWidth: 560, width: '100%', alignSelf: 'center' },
   brand: { alignItems: 'center', marginBottom: spacing.xxxl },
-  logoCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: radius.full,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.lg,
-    ...shadow.raised,
-  },
   title: { ...typography.h1, color: colors.textPrimary },
   subtitle: { ...typography.body, color: colors.textSecondary, marginTop: spacing.xs, textAlign: 'center' },
   form: {

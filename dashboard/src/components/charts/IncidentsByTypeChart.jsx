@@ -7,6 +7,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import { DASHBOARD_COLORS, getIncidentTypeColor } from '../../theme';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
@@ -23,7 +24,7 @@ export default function IncidentsByTypeChart({ incidents }) {
       {
         label: 'Incidents',
         data: Object.values(counts),
-        backgroundColor: '#2563EB',
+        backgroundColor: Object.keys(counts).map(getIncidentTypeColor),
         borderRadius: 6,
         maxBarThickness: 40,
       },
@@ -32,10 +33,13 @@ export default function IncidentsByTypeChart({ incidents }) {
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: '#1E293B',
+        backgroundColor: DASHBOARD_COLORS.card,
+        borderColor: DASHBOARD_COLORS.border,
+        borderWidth: 1,
         padding: 10,
         cornerRadius: 8,
         titleFont: { family: 'Inter' },
@@ -43,11 +47,16 @@ export default function IncidentsByTypeChart({ incidents }) {
       },
     },
     scales: {
-      x: { ticks: { color: '#64748B', font: { family: 'Inter', size: 12 } }, grid: { display: false } },
-      y: {
-        ticks: { color: '#64748B', stepSize: 1, font: { family: 'Inter', size: 12 } },
-        grid: { color: '#E2E8F0' },
+      x: {
+        title: { display: true, text: 'Incident count', color: DASHBOARD_COLORS.textMuted, font: { family: 'Inter', size: 11 } },
+        ticks: { color: DASHBOARD_COLORS.textMuted, precision: 0, font: { family: 'Inter', size: 11 } },
+        grid: { color: DASHBOARD_COLORS.border },
         beginAtZero: true,
+      },
+      y: {
+        title: { display: true, text: 'Hazard type', color: DASHBOARD_COLORS.textMuted, font: { family: 'Inter', size: 11 } },
+        ticks: { color: DASHBOARD_COLORS.textMuted, font: { family: 'Inter', size: 11 } },
+        grid: { display: false },
       },
     },
   };
@@ -56,5 +65,5 @@ export default function IncidentsByTypeChart({ incidents }) {
     return <p className="text-ink-muted text-sm py-8 text-center">No incident data yet.</p>;
   }
 
-  return <Bar data={data} options={options} />;
+  return <Bar data={data} options={{ ...options, indexAxis: 'y' }} />;
 }

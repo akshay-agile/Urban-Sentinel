@@ -1,89 +1,60 @@
-/**
- * Urban Sentinel — Mobile Design System
- *
- * Light theme. Home is map-first (a live spatial view is the actual
- * interface, not a card stack) — see HomeScreen.js. Deliberately no dark
- * "hero" surface anymore; that treatment was tried and dropped.
- */
-
+/** Urban Sentinel mobile design tokens. */
 export const colors = {
-  primary: '#2563EB',
-  primaryDark: '#1D4ED8',
-  primarySoft: '#EFF6FF',
-
-  secondary: '#10B981',
-  secondarySoft: '#ECFDF5',
-
-  background: '#F8FAFC',
-  card: '#FFFFFF',
-
-  textPrimary: '#1E293B',
-  textSecondary: '#64748B',
-  textMuted: '#94A3B8',
-
-  border: '#E2E8F0',
-  borderStrong: '#CBD5E1',
-
-  success: '#10B981',
-  successSoft: '#ECFDF5',
-  warning: '#F59E0B',
-  warningSoft: '#FFFBEB',
-  danger: '#EF4444',
-  dangerSoft: '#FEF2F2',
-  info: '#3B82F6',
-  infoSoft: '#EFF6FF',
-
+  primary: '#4D91FF',
+  primaryDark: '#2671E8',
+  primarySoft: '#142B49',
+  secondary: '#34D399',
+  secondarySoft: '#12372F',
+  background: '#081321',
+  card: '#0E1B2B',
+  surface: '#0B1929',
+  elevated: '#172A40',
+  textPrimary: '#F2F6FC',
+  textSecondary: '#A8B7C9',
+  textMuted: '#71839A',
+  border: '#23374F',
+  borderStrong: '#344D69',
+  success: '#34D399',
+  successSoft: '#12372F',
+  warning: '#F5B942',
+  warningSoft: '#3A2D16',
+  danger: '#FF6678',
+  dangerSoft: '#3A202B',
+  info: '#4D9BFF',
+  infoSoft: '#142E4C',
+  hazardFire: '#FF854D',
+  hazardFlood: '#55B7F3',
+  hazardAccident: '#B69CFF',
+  hazardOther: '#F5B942',
   white: '#FFFFFF',
 };
 
+export const hazardColors = {
+  fire: colors.hazardFire,
+  smoke: colors.hazardFire,
+  flood: colors.hazardFlood,
+  accident: colors.hazardAccident,
+};
+
 export const severityColors = {
-  low: { fg: '#15803D', bg: '#DCFCE7' },
-  medium: { fg: '#B45309', bg: '#FEF3C7' },
-  high: { fg: '#C2410C', bg: '#FFEDD5' },
-  critical: { fg: '#B91C1C', bg: '#FEE2E2' },
+  low: { fg: '#36D6A0', bg: '#12372F' },
+  medium: { fg: '#F2BC5E', bg: '#3A2D16' },
+  high: { fg: '#FB923C', bg: '#3A291F' },
+  critical: { fg: '#FF6678', bg: '#3A202B' },
 };
 
-export const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  xxl: 24,
-  xxxl: 32,
-};
-
-export const radius = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  full: 999,
-};
-
+export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 };
+export const radius = { sm: 8, md: 12, lg: 16, xl: 20, full: 999 };
 export const typography = {
-  h1: { fontSize: 28, fontWeight: '700', letterSpacing: -0.5 },
-  h2: { fontSize: 22, fontWeight: '700', letterSpacing: -0.3 },
+  h1: { fontSize: 29, fontWeight: '700', letterSpacing: -0.6 },
+  h2: { fontSize: 23, fontWeight: '700', letterSpacing: -0.35 },
   h3: { fontSize: 17, fontWeight: '600' },
   body: { fontSize: 15, fontWeight: '400' },
   bodyMedium: { fontSize: 15, fontWeight: '500' },
   caption: { fontSize: 13, fontWeight: '400' },
   small: { fontSize: 12, fontWeight: '500' },
 };
-
 export const shadow = {
-  card: {
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  raised: {
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
-  },
+  card: { shadowColor: '#000000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.22, shadowRadius: 8, elevation: 3 },
+  raised: { shadowColor: '#000000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.28, shadowRadius: 14, elevation: 6 },
 };

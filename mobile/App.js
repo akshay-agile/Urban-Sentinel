@@ -13,8 +13,7 @@ export default function App() {
   return (
     <AuthProvider>
       <RootNavigator />
-      {/* dark icons/text — status bar sits on the light background now */}
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
     </AuthProvider>
   );
 }

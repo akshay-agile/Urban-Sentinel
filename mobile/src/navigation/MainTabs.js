@@ -16,10 +16,11 @@ const ProfileStackNav = createNativeStackNavigator();
 
 const stackHeaderOptions = {
   headerShown: true,
-  headerStyle: { backgroundColor: colors.card },
+  headerStyle: { backgroundColor: colors.background },
   headerTintColor: colors.textPrimary,
-  headerTitleStyle: { fontWeight: '700' },
-  headerShadowVisible: true,
+  headerTitleStyle: { fontWeight: '700', fontSize: 16 },
+  headerShadowVisible: false,
+  headerBackTitleVisible: false,
 };
 
 function HomeStack() {
@@ -60,11 +61,11 @@ export default function MainTabs() {
           backgroundColor: colors.card,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 60,
-          paddingTop: 6,
-          paddingBottom: 8,
+          height: 64,
+          paddingTop: 7,
+          paddingBottom: 9,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '700', marginTop: 1 },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarIcon: ({ color, size, focused }) => (

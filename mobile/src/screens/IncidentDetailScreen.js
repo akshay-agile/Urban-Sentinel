@@ -1,20 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Linking, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import * as api from '../api/endpoints';
-import { colors, radius, severityColors, shadow, spacing, typography } from '../theme';
+import { HazardIcon, Screen, SeverityBadge, StatePanel } from '../components/UI';
+import { colors, radius, spacing, typography } from '../theme';
 
-const INCIDENT_ICONS = {
-  fire: 'flame',
-  gas_leak: 'warning',
-  flood: 'water',
-  structural_damage: 'business',
-  temperature_spike: 'thermometer',
-  explosion: 'nuclear',
-};
-
-// Mirrors backend/app/services/notification_content.py's guidance text.
 const SAFETY_GUIDANCE = {
   fire: "Move away from the area now. Don't use elevators. Follow evacuation routes if you're in a building.",
   gas_leak: "Don't use open flames, switches, or your car ignition nearby. Move upwind and away from the source.",
@@ -24,161 +15,102 @@ const SAFETY_GUIDANCE = {
   explosion: 'Move away from the area immediately. Follow instructions from local authorities if given.',
 };
 
-/**
- * Universal Google Maps deep link — opens the Google Maps app if
- * installed (Android or iOS) with turn-by-turn directions ready to go,
- * or falls back to Google Maps in the browser if it isn't. No native
- * dependency needed (React Native's built-in Linking API), and no
- * dev-build/rebuild required either way.
- *
- * Chosen over an embedded static map (the previous approach) because an
- * actual navigation app is what helps someone get there — a picture of
- * a map inside the app can't give turn-by-turn directions.
- */
-function openDirections(latitude, longitude) {
+async function openDirections(latitude, longitude) {
   const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
-  Linking.openURL(url);
+  await Linking.openURL(url);
 }
 
 export default function IncidentDetailScreen({ route }) {
   const { incidentId } = route.params;
   const [incident, setIncident] = useState(null);
   const [error, setError] = useState('');
+  const [linkError, setLinkError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   const load = useCallback(async () => {
     setIsLoading(true);
     setError('');
     try {
-      const data = await api.getIncidentById(incidentId);
-      setIncident(data);
+      setIncident(await api.getIncidentById(incidentId));
     } catch {
       setError("Couldn't load incident details. Check your connection.");
     } finally {
       setIsLoading(false);
     }
   }, [incidentId]);
+  useEffect(() => { load(); }, [load]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  if (isLoading && !incident) return <Screen edges={['bottom']}><StatePanel loading title="Loading incident" message="Retrieving the recorded incident details."/></Screen>;
+  if (error && !incident) return <Screen edges={['bottom']}><View style={styles.center}><StatePanel icon="cloud-offline-outline" title="Incident unavailable" message={error} actionLabel="Try again" onAction={load} error/></View></Screen>;
+  if (!incident) return null;
 
-  if (isLoading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
-  if (error || !incident) {
-    return (
-      <View style={styles.centered}>
-        <Ionicons name="alert-circle" size={32} color={colors.danger} />
-        <Text style={styles.errorText}>{error || 'Incident not found.'}</Text>
-      </View>
-    );
-  }
-
-  const sev = severityColors[incident.severity] || severityColors.medium;
-  const guidance = SAFETY_GUIDANCE[incident.incident_type] || 'Stay alert and follow guidance from local authorities.';
+  const guidance = SAFETY_GUIDANCE[incident.incident_type] || 'Stay alert, keep a safe distance, and follow guidance from local authorities.';
+  const statusColor = incident.status === 'active' ? colors.warning : colors.success;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.headerRow}>
-        <View style={styles.iconWrap}>
-          <Ionicons name={INCIDENT_ICONS[incident.incident_type] || 'alert-circle'} size={22} color={colors.primary} />
+    <Screen edges={['bottom']}>
+      <ScrollView contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={isLoading} onRefresh={load} tintColor={colors.primary} colors={[colors.primary]}/> }>
+        {error ? <View style={styles.stale}><Ionicons name="cloud-offline-outline" size={15} color={colors.warning}/><Text style={styles.staleText}>Refresh failed. Showing the last loaded details.</Text></View> : null}
+        <View style={styles.hero}>
+          <HazardIcon type={incident.incident_type} size={23}/>
+          <View style={styles.heroCopy}><Text style={styles.eyebrow}>Incident #{incident.id}</Text><Text style={styles.title}>{incident.incident_type.replaceAll('_', ' ')}</Text></View>
+          <SeverityBadge severity={incident.severity}/>
         </View>
-        <View style={styles.headerTextWrap}>
-          <Text style={styles.title}>{incident.incident_type.replace('_', ' ')}</Text>
-          <Text style={styles.subtitle}>
-            {incident.status === 'active' ? 'Active' : 'Resolved'} · Detected{' '}
-            {new Date(incident.detected_at).toLocaleString()}
-          </Text>
-        </View>
-        <View style={[styles.severityBadge, { backgroundColor: sev.bg }]}>
-          <Text style={[styles.severityText, { color: sev.fg }]}>{incident.severity}</Text>
-        </View>
-      </View>
+        <View style={styles.statusRow}><View style={[styles.statusDot, { backgroundColor: statusColor }]}/><Text style={[styles.statusText, { color: statusColor }]}>{incident.status}</Text><Text style={styles.detected}>Detected {new Date(incident.detected_at).toLocaleString()}</Text></View>
 
-      <TouchableOpacity
-        style={styles.directionsButton}
-        onPress={() => openDirections(incident.latitude, incident.longitude)}
-        activeOpacity={0.85}
-      >
-        <Ionicons name="navigate" size={18} color={colors.white} />
-        <Text style={styles.directionsButtonText}>Get Directions</Text>
-        <Ionicons name="open-outline" size={16} color={colors.white} />
-      </TouchableOpacity>
-      <Text style={styles.directionsHint}>Opens Google Maps for turn-by-turn navigation to this location.</Text>
+        <TouchableOpacity style={styles.directionsButton} onPress={async () => { setLinkError(''); try { await openDirections(incident.latitude, incident.longitude); } catch { setLinkError('Could not open a maps app for these coordinates.'); } }} activeOpacity={0.85}>
+          <Ionicons name="navigate" size={18} color={colors.white}/><Text style={styles.directionsText}>Get directions</Text><Ionicons name="open-outline" size={16} color={colors.white}/>
+        </TouchableOpacity>
+        <Text style={styles.directionsHint}>Opens your available maps app with this recorded location.</Text>
+        {linkError ? <Text style={styles.linkError}>{linkError}</Text> : null}
 
-      <View style={styles.card}>
-        <Text style={styles.cardLabel}>Alert radius</Text>
-        <Text style={styles.cardValue}>{incident.radius_meters}m</Text>
-      </View>
-
-      <View style={styles.guidanceCard}>
-        <View style={styles.guidanceHeader}>
-          <Ionicons name="shield-checkmark" size={18} color={colors.primary} />
-          <Text style={styles.guidanceTitle}>What to do</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Incident record</Text>
+          <View style={styles.detailsCard}>
+            <Detail icon="location-outline" label="Coordinates" value={`${Number(incident.latitude).toFixed(6)}, ${Number(incident.longitude).toFixed(6)}`}/>
+            <Detail icon="radio-outline" label="Alert radius" value={`${incident.radius_meters} m`}/>
+            <Detail icon="time-outline" label="Detected at" value={new Date(incident.detected_at).toLocaleString()}/>
+            {incident.resolved_at ? <Detail icon="checkmark-circle-outline" label="Resolved at" value={new Date(incident.resolved_at).toLocaleString()}/> : null}
+            {incident.device_id != null ? <Detail icon="videocam-outline" label="Source device record" value={`Device #${incident.device_id}`}/> : null}
+          </View>
         </View>
-        <Text style={styles.guidanceText}>{guidance}</Text>
-      </View>
-    </ScrollView>
+
+        <View style={styles.guidanceCard}>
+          <View style={styles.guidanceHeader}><View style={styles.guidanceIcon}><Ionicons name="shield-checkmark-outline" size={18} color={colors.primary}/></View><View><Text style={styles.guidanceTitle}>Safety guidance</Text><Text style={styles.guidanceSubtitle}>General precautions for this hazard</Text></View></View>
+          <Text style={styles.guidanceText}>{guidance}</Text>
+          <Text style={styles.guidanceFootnote}>Follow emergency service instructions and local authority advisories.</Text>
+        </View>
+      </ScrollView>
+    </Screen>
   );
 }
 
+function Detail({ icon, label, value }) {
+  return <View style={styles.detailRow}><Ionicons name={icon} size={17} color={colors.textMuted}/><View style={styles.detailCopy}><Text style={styles.detailLabel}>{label}</Text><Text style={styles.detailValue}>{value}</Text></View></View>;
+}
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.xl, paddingBottom: spacing.xxxl },
-  centered: { flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.xl },
-  errorText: { color: colors.danger, textAlign: 'center' },
-  headerRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: spacing.lg },
-  iconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.md,
-  },
-  headerTextWrap: { flex: 1 },
-  title: { ...typography.h2, color: colors.textPrimary, textTransform: 'capitalize' },
-  subtitle: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
-  severityBadge: { paddingHorizontal: spacing.sm, paddingVertical: 4, borderRadius: radius.full, marginTop: 4 },
-  severityText: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
-
-  directionsButton: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    padding: spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadow.card,
-  },
-  directionsButtonText: { color: colors.white, fontWeight: '700', fontSize: 15 },
-  directionsHint: { ...typography.small, color: colors.textMuted, textAlign: 'center', marginTop: spacing.sm, marginBottom: spacing.lg },
-
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...shadow.card,
-  },
-  cardLabel: { ...typography.caption, color: colors.textSecondary },
-  cardValue: { fontSize: 24, fontWeight: '700', color: colors.textPrimary, marginTop: 2 },
-  guidanceCard: {
-    backgroundColor: colors.primarySoft,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-  },
-  guidanceHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
-  guidanceTitle: { ...typography.bodyMedium, color: colors.textPrimary },
-  guidanceText: { ...typography.body, color: colors.textPrimary, lineHeight: 21 },
+  center: { flex: 1, justifyContent: 'center', padding: spacing.lg },
+  content: { padding: spacing.lg, paddingBottom: spacing.xxxl, maxWidth: 720, width: '100%', alignSelf: 'center' },
+  hero: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg },
+  heroCopy: { flex: 1 }, eyebrow: { color: colors.textMuted, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
+  title: { ...typography.h2, color: colors.textPrimary, textTransform: 'capitalize', marginTop: 3 },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginVertical: spacing.lg },
+  statusDot: { width: 7, height: 7, borderRadius: 4 }, statusText: { fontSize: 12, fontWeight: '700', textTransform: 'capitalize' },
+  detected: { color: colors.textMuted, fontSize: 10, marginLeft: 'auto', textAlign: 'right', flexShrink: 1 },
+  directionsButton: { flexDirection: 'row', gap: spacing.sm, backgroundColor: colors.primaryDark, borderRadius: radius.md, padding: spacing.lg, alignItems: 'center', justifyContent: 'center' },
+  directionsText: { color: colors.white, fontWeight: '700', fontSize: 14 },
+  directionsHint: { color: colors.textMuted, fontSize: 10, lineHeight: 15, textAlign: 'center', marginTop: spacing.sm },
+  linkError: { color: colors.danger, fontSize: 11, textAlign: 'center', marginTop: spacing.sm },
+  section: { marginTop: spacing.xxl }, sectionTitle: { color: colors.textPrimary, fontSize: 14, fontWeight: '700', marginBottom: spacing.md },
+  detailsCard: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, paddingHorizontal: spacing.lg },
+  detailRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
+  detailCopy: { flex: 1 }, detailLabel: { color: colors.textMuted, fontSize: 10 }, detailValue: { color: colors.textPrimary, fontSize: 13, fontWeight: '600', marginTop: 3 },
+  guidanceCard: { marginTop: spacing.lg, borderRadius: radius.lg, padding: spacing.lg, borderWidth: 1, borderColor: '#21416A', backgroundColor: colors.primarySoft },
+  guidanceHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  guidanceIcon: { width: 38, height: 38, borderRadius: radius.md, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' },
+  guidanceTitle: { color: colors.textPrimary, fontSize: 14, fontWeight: '700' }, guidanceSubtitle: { color: colors.textSecondary, fontSize: 10, marginTop: 3 },
+  guidanceText: { color: colors.textPrimary, fontSize: 14, lineHeight: 21, marginTop: spacing.lg },
+  guidanceFootnote: { color: colors.textSecondary, fontSize: 10, lineHeight: 15, marginTop: spacing.md },
+  stale: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.warningSoft, borderColor: '#6A5123', borderWidth: 1, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md }, staleText: { color: colors.textSecondary, flex: 1, fontSize: 11 },
 });

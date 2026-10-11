@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
  * Polls a fetcher function on an interval. This is intentionally simple
@@ -11,18 +11,34 @@ export function usePolling(fetcher, intervalMs = 5000) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const inFlight = useRef(false);
+  const refreshQueued = useRef(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async ({ queueIfBusy = false } = {}) => {
+    if (inFlight.current) {
+      if (queueIfBusy) refreshQueued.current = true;
+      return;
+    }
+    inFlight.current = true;
     try {
       const result = await fetcher();
       setData(result);
       setError(null);
+      setLastUpdated(new Date());
     } catch (err) {
       setError(err);
     } finally {
+      inFlight.current = false;
       setIsLoading(false);
+      if (refreshQueued.current) {
+        refreshQueued.current = false;
+        void load();
+      }
     }
   }, [fetcher]);
+
+  const refresh = useCallback(() => load({ queueIfBusy: true }), [load]);
 
   useEffect(() => {
     load();
@@ -30,5 +46,5 @@ export function usePolling(fetcher, intervalMs = 5000) {
     return () => clearInterval(id);
   }, [load, intervalMs]);
 
-  return { data, error, isLoading, refresh: load };
+  return { data, error, isLoading, isStale: error !== null && data !== null, lastUpdated, refresh };
 }
