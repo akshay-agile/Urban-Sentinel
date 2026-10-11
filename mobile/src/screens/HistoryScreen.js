@@ -46,7 +46,7 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   list: { width: '100%', maxWidth: 760, alignSelf: 'center', paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.xxl, flexGrow: 1 },
   updated: { color: colors.textMuted, fontSize: 10, marginTop: -spacing.md, marginBottom: spacing.md },
-  stale: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.warningSoft, borderWidth: 1, borderColor: '#6A5123', borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md },
+  stale: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.warningSoft, borderWidth: 1, borderColor: '#EBD5A7', borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md },
   staleText: { color: colors.textSecondary, fontSize: 11, flex: 1 },
   row: { flexDirection: 'row', gap: spacing.md },
   timeline: { alignItems: 'center', width: 14 },

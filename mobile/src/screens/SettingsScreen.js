@@ -22,8 +22,8 @@ export default function SettingsScreen() {
         Notifications.getPermissionsAsync(),
         Location.getForegroundPermissionsAsync(),
       ]);
-      setNotificationStatus(notifications.granted ? 'Allowed' : notifications.status === 'denied' ? 'Denied' : 'Not requested');
-      setLocationStatus(location.granted ? 'Allowed' : location.status === 'denied' ? 'Denied' : 'Not requested');
+      setNotificationStatus(permissionLabel(notifications));
+      setLocationStatus(permissionLabel(location));
     } catch {
       setError('Could not read device permissions. Open system settings to review them.');
     }
@@ -40,7 +40,7 @@ export default function SettingsScreen() {
         <PermissionCard icon="location-outline" title="Location access" status={locationStatus} description={user?.latitude != null && user?.longitude != null ? `A location is stored on your account (${Number(user.latitude).toFixed(4)}, ${Number(user.longitude).toFixed(4)}). Permission status alone does not update that location.` : 'No location is currently stored on your account. Use the Home setup action to request location and register it.'}/>
         <TouchableOpacity style={styles.settingsButton} onPress={() => Linking.openSettings()} activeOpacity={0.8}><Ionicons name="settings-outline" size={17} color={colors.primary}/><Text style={styles.settingsButtonText}>Open device settings</Text><Ionicons name="open-outline" size={15} color={colors.textMuted}/></TouchableOpacity>
         <TouchableOpacity style={styles.refreshButton} onPress={loadPermissions} activeOpacity={0.8}><Ionicons name="refresh-outline" size={15} color={colors.textSecondary}/><Text style={styles.refreshText}>Refresh permission status</Text></TouchableOpacity>
-        <Text style={styles.note}>There are no in-app switches here that toggle backend notification or location behavior.</Text>
+        <Text style={styles.note}>If you declined a permission or blocked it, Urban Sentinel will not keep prompting. Use Open device settings to enable it later, then return and refresh this page.</Text>
         <Text style={styles.version}>URBAN SENTINEL · v0.1.0</Text>
       </ScrollView>
     </Screen>
@@ -50,6 +50,13 @@ export default function SettingsScreen() {
 function PermissionCard({ icon, title, status, description }) {
   const allowed = status === 'Allowed';
   return <View style={styles.card}><View style={styles.cardTop}><View style={styles.iconWrap}><Ionicons name={icon} size={18} color={colors.primary}/></View><View style={styles.cardTitleWrap}><Text style={styles.title}>{title}</Text><Text style={[styles.status, { color: allowed ? colors.success : status === 'Denied' ? colors.danger : colors.warning }]}>{status}</Text></View><Ionicons name={allowed ? 'checkmark-circle' : 'information-circle-outline'} size={19} color={allowed ? colors.success : colors.warning}/></View><Text style={styles.description}>{description}</Text></View>;
+}
+
+function permissionLabel(permission) {
+  if (permission.granted) return 'Allowed';
+  if (permission.status === 'denied' && permission.canAskAgain === false) return 'Blocked in device settings';
+  if (permission.status === 'denied') return 'Denied';
+  return 'Not requested';
 }
 
 const styles = StyleSheet.create({

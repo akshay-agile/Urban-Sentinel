@@ -1,4 +1,5 @@
 from collections.abc import Callable
+import logging
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -18,8 +19,44 @@ _SEVERITY_ORDER = [
     SeverityEnum.high,
     SeverityEnum.critical,
 ]
+logger = logging.getLogger("urban_sentinel.notifications")
 
 BroadcastFn = Callable[[dict[str, Any]], None]
+
+
+def _deliver_incident_notifications(
+    db: Session,
+    incident: Incident,
+    broadcast: BroadcastFn,
+) -> None:
+    notifications = generate_notifications_for_incident(db, incident)
+    deliver_notifications(db, notifications, incident)
+
+    for item in notifications:
+        notification = item.notification
+        title, body = build_notification_content(
+            incident,
+            distance_meters=item.distance_meters,
+            user_latitude=item.user_latitude,
+            user_longitude=item.user_longitude,
+        )
+        broadcast({
+            "type": "notification_created",
+            "id": notification.id,
+            "user_id": notification.user_id,
+            "incident_id": incident.id,
+            "channel": notification.channel.value,
+            "status": notification.status.value,
+            "title": title,
+            "body": body,
+        })
+        logger.info(
+            "Notification WebSocket event queued for incident #%d notification #%d user #%d channel=%s",
+            incident.id,
+            notification.id,
+            notification.user_id,
+            notification.channel.value,
+        )
 
 
 def dispatch_classification(
@@ -53,6 +90,10 @@ def dispatch_classification(
                 "status": existing.status.value,
                 "severity": existing.severity.value,
             })
+        # The notification engine suppresses sent rows but returns failed or
+        # pending FCM rows for retry. This lets a newly refreshed device token
+        # recover without creating duplicate notification records.
+        _deliver_incident_notifications(db, existing, broadcast)
 
         return existing
 
@@ -75,29 +116,7 @@ def dispatch_classification(
         "severity": incident.severity.value,
     })
 
-    notifications = generate_notifications_for_incident(db, incident)
-    deliver_notifications(db, notifications, incident)
-
-    for item in notifications:
-        n = item.notification
-
-        title, body = build_notification_content(
-            incident,
-            distance_meters=item.distance_meters,
-            user_latitude=item.user_latitude,
-            user_longitude=item.user_longitude,
-        )
-
-        broadcast({
-            "type": "notification_created",
-            "id": n.id,
-            "user_id": n.user_id,
-            "incident_id": incident.id,
-            "channel": n.channel.value,
-            "status": n.status.value,
-            "title": title,
-            "body": body,
-        })
+    _deliver_incident_notifications(db, incident, broadcast)
 
     return incident
 

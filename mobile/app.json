@@ -5,12 +5,16 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/urban-sentinel-icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
+    "androidNavigationBar": {
+      "backgroundColor": "#F4F7FB",
+      "barStyle": "dark-content"
+    },
     "splash": {
       "image": "./assets/urban-sentinel-icon.png",
       "imageWidth": 180,
       "resizeMode": "contain",
-      "backgroundColor": "#F8FAFC"
+      "backgroundColor": "#F4F7FB"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -25,6 +29,10 @@
     "android": {
       "package": "com.urbansentinel.app",
       "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/urban-sentinel-icon.png",
+        "backgroundColor": "#F4F7FB"
+      },
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",

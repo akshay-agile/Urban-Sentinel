@@ -36,6 +36,8 @@ export default function SeverityChart({ incidents }) {
         backgroundColor: DASHBOARD_COLORS.card,
         borderColor: DASHBOARD_COLORS.border,
         borderWidth: 1,
+        titleColor: DASHBOARD_COLORS.text,
+        bodyColor: DASHBOARD_COLORS.text,
         padding: 10,
         cornerRadius: 8,
         titleFont: { family: 'Inter' },

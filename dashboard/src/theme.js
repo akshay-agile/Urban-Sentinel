@@ -1,28 +1,28 @@
 export const DASHBOARD_COLORS = {
-  surface: '#081321',
-  card: '#0E1B2B',
-  text: '#EAF1FB',
-  textMuted: '#A7B7CC',
-  border: '#1D3047',
-  primary: '#4D91FF',
+  surface: '#F4F7FB',
+  card: '#FFFFFF',
+  text: '#172B45',
+  textMuted: '#5F7187',
+  border: '#DFE7F0',
+  primary: '#2867B2',
 };
 
 export const SEVERITY_COLORS = {
-  low: '#36D6A0',
-  medium: '#F2BC5E',
-  high: '#FB923C',
-  critical: '#FF6678',
+  low: '#26845A',
+  medium: '#A96813',
+  high: '#C6531D',
+  critical: '#B8323D',
 };
 
 export const INCIDENT_TYPE_COLORS = {
-  fire: '#FF854D',
-  smoke: '#FF854D',
-  flood: '#55B7F3',
-  accident: '#B69CFF',
-  gas_leak: '#F2BC5E',
-  structural_damage: '#A7B7CC',
-  temperature_spike: '#FF6678',
-  explosion: '#FF6678',
+  fire: '#D64C4C',
+  smoke: '#D64C4C',
+  flood: '#3478D4',
+  accident: '#B66A1A',
+  gas_leak: '#A96813',
+  structural_damage: '#6652A3',
+  temperature_spike: '#B8323D',
+  explosion: '#B8323D',
 };
 
 export function getIncidentTypeColor(type) {

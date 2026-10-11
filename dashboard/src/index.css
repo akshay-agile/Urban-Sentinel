@@ -2,10 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Keep the command dashboard light even when a long-running Vite session has
+   cached a previous Tailwind theme configuration. */
+.bg-surface { background-color: #F4F7FB !important; }
+.bg-card { background-color: #FFFFFF !important; }
+.bg-panel { background-color: #F8FAFD !important; }
+.bg-primary { background-color: #2867B2 !important; }
+.bg-primary-soft { background-color: #E8F1FC !important; }
+.bg-success-soft { background-color: #E7F5EC !important; }
+.bg-danger-soft { background-color: #FCEBED !important; }
+.bg-warning-soft { background-color: #FFF3D9 !important; }
+.bg-info-soft { background-color: #E8F3FC !important; }
+.text-ink { color: #172B45 !important; }
+.text-ink-soft { color: #475D75 !important; }
+.text-ink-muted { color: #5F7187 !important; }
+.text-primary { color: #2867B2 !important; }
+.border-line { border-color: #DFE7F0 !important; }
+
 html {
-  color-scheme: dark;
+  color-scheme: light;
   min-width: 320px;
-  background: #081321;
+  background: #f4f7fb;
 }
 
 body {
@@ -14,92 +31,68 @@ body {
   min-height: 100vh;
   font-feature-settings: 'ss01' on;
   text-rendering: optimizeLegibility;
+  background-image: radial-gradient(ellipse at 72% -15%, rgb(214 232 250 / 0.55), transparent 45%);
 }
 
 button,
 a {
   -webkit-tap-highlight-color: transparent;
+  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
 
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid #4d91ff;
+  outline: 2px solid #3478d4;
   outline-offset: 2px;
 }
 
 ::selection {
-  color: #eef5ff;
-  background: #2671e8;
+  color: #172b45;
+  background: #d8e9fc;
 }
 
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: #081321;
-}
-
-::-webkit-scrollbar-thumb {
-  border: 2px solid #081321;
-  border-radius: 999px;
-  background: #29425f;
-}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #f4f7fb; }
+::-webkit-scrollbar-thumb { border: 2px solid #f4f7fb; border-radius: 999px; background: #c5d2e0; }
 
 .leaflet-popup-content-wrapper,
 .leaflet-popup-tip {
-  color: #eaf1fb;
-  background: #0e1b2b;
+  color: #172b45;
+  background: #ffffff;
 }
 
 .leaflet-popup-content-wrapper {
-  border: 1px solid #29425f;
-  box-shadow: 0 12px 32px rgb(0 0 0 / 0.35);
+  border: 1px solid #dfe7f0;
+  box-shadow: 0 10px 28px rgb(28 53 82 / 0.14);
 }
 
-.leaflet-popup-content {
-  margin: 12px 14px;
-}
+.leaflet-popup-content { margin: 12px 14px; }
+.leaflet-container { background: #eef3f7; font: inherit; }
+.leaflet-container a.leaflet-popup-close-button { color: #687b91; }
+.leaflet-control-attribution { color: #52667c !important; background: rgb(255 255 255 / 0.9) !important; }
 
-.leaflet-container a.leaflet-popup-close-button {
-  color: #a7b7cc;
-}
-
-.leaflet-control-attribution {
-  color: #40536c !important;
-  background: rgb(8 19 33 / 0.8) !important;
-}
-
-.leaflet-div-icon.ops-map-marker-shell {
-  border: 0;
-  background: transparent;
-}
-
+.leaflet-div-icon.ops-map-marker-shell { border: 0; background: transparent; }
 .ops-map-marker {
   display: flex;
   width: 28px;
   height: 28px;
   align-items: center;
   justify-content: center;
-  border: 2px solid #eaf1fb;
+  border: 2px solid #ffffff;
   border-radius: 50% 50% 50% 8px;
   background: var(--marker-color);
-  box-shadow: 0 3px 12px rgb(0 0 0 / 0.45);
+  box-shadow: 0 2px 8px rgb(23 43 69 / 0.25);
   transform: rotate(-45deg);
   transition: transform 150ms ease, box-shadow 150ms ease;
 }
+.ops-map-marker--selected { transform: scale(1.15) rotate(-45deg); box-shadow: 0 0 0 4px rgb(52 120 212 / 0.18), 0 2px 8px rgb(23 43 69 / 0.25); }
+.ops-map-marker-dot { width: 7px; height: 7px; border: 1.5px solid #ffffff; border-radius: 999px; background: #ffffff; transform: rotate(45deg); }
 
-.ops-map-marker--selected {
-  transform: scale(1.15) rotate(-45deg);
-  box-shadow: 0 0 0 4px rgb(77 145 255 / 0.28), 0 3px 12px rgb(0 0 0 / 0.45);
-}
+main h1 { letter-spacing: -0.035em; }
+main section, main article { scroll-margin-top: 100px; }
+main button:active { transform: translateY(1px); }
 
-.ops-map-marker-dot {
-  width: 7px;
-  height: 7px;
-  border: 1.5px solid #eaf1fb;
-  border-radius: 999px;
-  background: #081321;
-  transform: rotate(45deg);
+@media (max-width: 640px) { main { overflow-wrap: anywhere; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
 }

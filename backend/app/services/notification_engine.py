@@ -15,6 +15,7 @@ rather than a generic one — knowing "800m radius" means nothing to a
 person; knowing "you're 350m northeast of it" does.
 """
 from dataclasses import dataclass
+import logging
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -24,6 +25,8 @@ from app.models.enums import NotificationChannelEnum, NotificationStatusEnum, Pl
 from app.models.incident import Incident
 from app.models.notification import Notification
 from app.services.radius_engine import find_users_in_radius
+
+logger = logging.getLogger("urban_sentinel.notifications")
 
 
 @dataclass
@@ -43,6 +46,20 @@ def _channel_for_platform(platform: PlatformEnum | None) -> NotificationChannelE
 
 def generate_notifications_for_incident(db: Session, incident: Incident) -> list[DispatchedNotification]:
     nearby = find_users_in_radius(db, incident)
+    if not nearby:
+        logger.info(
+            "No eligible notification recipients for incident #%d within its %dm radius",
+            incident.id,
+            incident.radius_meters,
+        )
+        return []
+
+    logger.info(
+        "Matched %d notification recipient(s) for incident #%d within its %dm radius",
+        len(nearby),
+        incident.id,
+        incident.radius_meters,
+    )
     created: list[DispatchedNotification] = []
 
     for match in nearby:
@@ -61,6 +78,14 @@ def generate_notifications_for_incident(db: Session, incident: Incident) -> list
                     NotificationStatusEnum.failed,
                 }
             ):
+                logger.info(
+                    "Skipping duplicate notification #%d for user #%d incident #%d status=%s channel=%s",
+                    notification.id,
+                    match.user.id,
+                    incident.id,
+                    notification.status.value,
+                    notification.channel.value,
+                )
                 continue
         else:
             notification = Notification(

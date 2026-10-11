@@ -1,7 +1,81 @@
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
+import { useEffect } from 'react';
 
 import * as api from '../api/endpoints';
+
+async function saveAndroidDeviceToken(token) {
+  if (typeof token !== 'string' || token.length === 0) {
+    throw new Error('The device did not return a valid FCM token.');
+  }
+  await api.updateMe({ push_token: token, platform: 'android' });
+}
+
+function hasAndroidFirebaseConfiguration() {
+  return Boolean(Constants.expoConfig?.android?.googleServicesFile);
+}
+
+/** Refresh the authenticated Android account's native FCM token without prompting. */
+export function useAndroidPushTokenRefresh(enabled) {
+  useEffect(() => {
+    if (!enabled || Platform.OS !== 'android') return undefined;
+
+    let active = true;
+    let refreshing = false;
+
+    if (!hasAndroidFirebaseConfiguration()) {
+      console.warn('Android FCM token refresh skipped: Firebase configuration is unavailable.');
+      return undefined;
+    }
+
+    const refreshToken = async () => {
+      if (!active || refreshing) return;
+      refreshing = true;
+      try {
+        const permission = await Notifications.getPermissionsAsync();
+        if (!permission.granted) return;
+
+        const tokenResponse = await Notifications.getDevicePushTokenAsync();
+        if (!active) return;
+        await saveAndroidDeviceToken(tokenResponse?.data);
+        console.info('Android FCM token refreshed with the backend (token omitted).');
+      } catch (err) {
+        console.warn(
+          'Android FCM token refresh failed:',
+          err.response?.status || err.message || 'unknown error',
+        );
+      } finally {
+        refreshing = false;
+      }
+    };
+
+    const tokenSubscription = Notifications.addPushTokenListener(async (tokenResponse) => {
+      if (!active) return;
+      try {
+        const permission = await Notifications.getPermissionsAsync();
+        if (!active || !permission.granted) return;
+        await saveAndroidDeviceToken(tokenResponse?.data);
+        console.info('Rotated Android FCM token saved (token omitted).');
+      } catch (err) {
+        console.warn(
+          'Rotated Android FCM token could not be saved:',
+          err.response?.status || err.message || 'unknown error',
+        );
+      }
+    });
+    const appStateSubscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void refreshToken();
+    });
+
+    void refreshToken();
+    return () => {
+      active = false;
+      tokenSubscription.remove();
+      appStateSubscription.remove();
+    };
+  }, [enabled]);
+}
 
 /**
  * Requests notification permission and, on Android, registers the
@@ -30,6 +104,9 @@ export async function registerForPushNotifications() {
   }
 
   if (Platform.OS === 'android') {
+    if (!hasAndroidFirebaseConfiguration()) {
+      return { granted: true, error: 'Firebase is not configured in this Android build, so push registration is unavailable.' };
+    }
     let tokenResponse;
     try {
       tokenResponse = await Notifications.getDevicePushTokenAsync();
@@ -41,13 +118,8 @@ export async function registerForPushNotifications() {
       };
     }
 
-    const token = tokenResponse?.data;
-    if (typeof token !== 'string' || token.length === 0) {
-      return { granted: true, error: 'The device did not return a valid FCM token.' };
-    }
-
     try {
-      await api.updateMe({ push_token: token, platform: 'android' });
+      await saveAndroidDeviceToken(tokenResponse?.data);
     } catch (err) {
       console.error('Push token registration failed:', err.response?.status || err.message);
       return {

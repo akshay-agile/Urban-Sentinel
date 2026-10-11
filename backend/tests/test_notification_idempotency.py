@@ -19,6 +19,8 @@ from app.models.enums import (
 from app.models.incident import Incident
 from app.models.notification import Notification
 from app.models.user import User
+from app.services.incident_dispatch import dispatch_classification
+from app.services.incident_engine import Classification
 from app.services import notification_engine, push_delivery
 
 
@@ -131,6 +133,49 @@ class NotificationIdempotencyTests(unittest.TestCase):
             self.assertEqual(retry_batch[0].notification.status, NotificationStatusEnum.sent)
             self.assertEqual(send.call_count, 2)
             self.assertEqual(self.notification_count(), 1)
+
+    def test_camera_update_retries_failed_fcm_notification_for_existing_incident(self):
+        user = self.db.scalars(select(User).order_by(User.id)).first()
+        other_user = self.db.scalars(select(User).where(User.id != user.id)).first()
+        other_user.is_active = False
+        self.db.commit()
+
+        classification = Classification(
+            incident_type=IncidentTypeEnum.fire,
+            severity=SeverityEnum.medium,
+            radius_meters=1000,
+        )
+        broadcast_events = []
+
+        with (
+            patch.object(push_delivery, "_firebase_ready", True),
+            patch.object(push_delivery, "_send_fcm", side_effect=[False, True]) as send,
+        ):
+            created = dispatch_classification(
+                self.db,
+                self.device,
+                classification,
+                broadcast_events.append,
+            )
+            notification = self.db.scalar(select(Notification))
+            self.assertEqual(notification.status, NotificationStatusEnum.failed)
+
+            updated = dispatch_classification(
+                self.db,
+                self.device,
+                classification,
+                broadcast_events.append,
+            )
+
+        self.assertEqual(updated.id, created.id)
+        self.assertEqual(send.call_count, 2)
+        self.assertEqual(self.notification_count(), 1)
+        self.assertEqual(notification.status, NotificationStatusEnum.sent)
+        self.assertEqual(
+            sum(event["type"] == "notification_created" for event in broadcast_events),
+            2,
+            "The retry should re-announce delivery through the existing notification event",
+        )
 
     def test_database_constraint_rejects_duplicate_recipient_incident_rows(self):
         incident = self.make_incident()

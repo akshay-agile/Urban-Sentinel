@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
-import { Activity, AlertTriangle, BarChart3, Circle, LayoutDashboard, Radio } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { AlertTriangle, BarChart3, Bell, Camera, Circle, FileText, LayoutDashboard, MapPinned, Radio, UsersRound } from 'lucide-react';
 
 import { useLiveSocket } from '../api/useLiveSocket';
 
@@ -11,9 +11,89 @@ const NAV_ITEMS = [
   { to: '/analytics', label: 'Analytics', icon: BarChart3 },
 ];
 
+const SIDEBAR_GROUPS = [
+  {
+    label: 'Monitoring',
+    items: [
+      { to: '/', label: 'Overview', end: true, icon: LayoutDashboard },
+      { to: '/incidents', label: 'Incidents', icon: AlertTriangle },
+      { to: '/#incident-map', label: 'City map', icon: MapPinned, mapAnchor: true },
+      { label: 'Camera network', icon: Camera, unavailable: true },
+    ],
+  },
+  {
+    label: 'Response',
+    items: [
+      { label: 'Responders', icon: UsersRound, unavailable: true },
+      { label: 'Notifications', icon: Bell, unavailable: true },
+      // The existing Analytics page is the closest supported destination for Reports.
+      { to: '/analytics', label: 'Reports', icon: FileText },
+    ],
+  },
+];
+
+function navItemClass(active, compact = false) {
+  return `flex items-center gap-3 rounded-xl font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+    compact
+      ? `px-3 py-2 text-xs ${active ? 'bg-primary-soft text-primary' : 'text-ink-soft hover:bg-panel hover:text-ink'}`
+      : `px-3 py-[11px] text-xs ${active ? 'bg-primary-soft text-primary font-bold' : 'text-ink-soft hover:bg-panel hover:text-ink'}`
+  }`;
+}
+
 function Navigation({ compact = false }) {
+  const location = useLocation();
+
+  if (!compact) {
+    return (
+      <nav className="space-y-5" aria-label="Main navigation">
+        {SIDEBAR_GROUPS.map((group) => (
+          <section key={group.label} aria-label={group.label}>
+            <h2 className="mb-2 px-3 text-[9px] font-black uppercase tracking-[0.14em] text-ink-muted">{group.label}</h2>
+            <div className="space-y-1">
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                if (item.unavailable) {
+                  return (
+                    <button
+                      key={item.label}
+                      type="button"
+                      disabled
+                      title={`${item.label} is not implemented in this dashboard`}
+                      aria-label={`${item.label}, not implemented`}
+                      className={`${navItemClass(false)} w-full cursor-not-allowed opacity-70`}
+                    >
+                      <Icon size={16} strokeWidth={2} aria-hidden="true" />
+                      {item.label}
+                    </button>
+                  );
+                }
+
+                if (item.mapAnchor) {
+                  const active = location.pathname === '/' && location.hash === '#incident-map';
+                  return (
+                    <Link key={item.label} to={item.to} className={navItemClass(active)}>
+                      <Icon size={16} strokeWidth={2} aria-hidden="true" />
+                      {item.label}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => navItemClass(isActive)}>
+                    <Icon size={16} strokeWidth={2} aria-hidden="true" />
+                    {item.label}
+                  </NavLink>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </nav>
+    );
+  }
+
   return (
-    <nav className={compact ? 'flex min-w-max gap-2 px-4 pb-3' : 'space-y-1 px-3'} aria-label="Main navigation">
+    <nav className={compact ? 'flex min-w-max gap-1 px-4 pb-3' : 'space-y-1'} aria-label="Main navigation">
       {NAV_ITEMS.map((item) => {
         const Icon = item.icon;
         return (
@@ -25,7 +105,7 @@ function Navigation({ compact = false }) {
               `flex items-center gap-3 rounded-xl font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                 compact
                   ? `px-3 py-2 text-xs ${isActive ? 'bg-primary-soft text-primary' : 'text-ink-soft hover:bg-panel hover:text-ink'}`
-                  : `px-3.5 py-3 text-sm ${isActive ? 'bg-primary-soft text-primary shadow-glow' : 'text-ink-soft hover:bg-panel hover:text-ink'}`
+                  : `px-3 py-3 text-sm ${isActive ? 'bg-primary-soft text-primary' : 'text-ink-soft hover:bg-panel hover:text-ink'}`
               }`
             }
           >
@@ -42,23 +122,18 @@ function ConnectionStatus({ isConnected, compact = false }) {
   return (
     <div
       className={`flex items-center gap-2 text-xs ${compact ? 'text-ink-soft' : ''}`}
-      aria-label={isConnected ? 'Live feed connected' : 'Live feed offline; polling for updates'}
+      aria-label={isConnected ? 'Event feed connected' : 'Event feed disconnected'}
     >
-      <span className="relative flex h-2 w-2 shrink-0">
-        {isConnected && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-40" />}
-        <Circle
-          size={8}
-          className={`relative ${isConnected ? 'fill-success text-success' : 'fill-ink-muted text-ink-muted'}`}
-        />
-      </span>
+      <Circle size={8} className={`shrink-0 ${isConnected ? 'fill-success text-success' : 'fill-ink-muted text-ink-muted'}`} />
       <span className={isConnected ? 'text-success' : 'text-ink-muted'}>
-        {compact ? (isConnected ? 'Live' : 'Polling') : isConnected ? 'Live feed connected' : 'Live feed offline · polling'}
+        {compact ? (isConnected ? 'Feed connected' : 'Feed disconnected') : isConnected ? 'Event feed connected' : 'Event feed disconnected'}
       </span>
     </div>
   );
 }
 
 export default function Layout() {
+  const location = useLocation();
   const [liveEvents, setLiveEvents] = useState([]);
   const [latestEvent, setLatestEvent] = useState(null);
   const onLiveEvent = useCallback((event) => {
@@ -70,10 +145,7 @@ export default function Layout() {
     };
     setLatestEvent(receivedEvent);
     if (!['incident_created', 'incident_updated', 'device_registered'].includes(event.type)) return;
-    setLiveEvents((current) => [
-      receivedEvent,
-      ...current,
-    ].slice(0, 30));
+    setLiveEvents((current) => [receivedEvent, ...current].slice(0, 30));
   }, []);
   const { isConnected } = useLiveSocket(onLiveEvent);
   const outletContext = useMemo(
@@ -81,54 +153,41 @@ export default function Layout() {
     [isConnected, liveEvents, latestEvent]
   );
 
+  useEffect(() => {
+    if (location.pathname === '/' && location.hash === '#incident-map') {
+      document.getElementById('incident-map')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [location.pathname, location.hash]);
+
   return (
-    <div className="min-h-screen bg-surface text-ink lg:flex">
-      <aside className="hidden w-[264px] shrink-0 border-r border-line bg-card lg:flex lg:flex-col">
-        <div className="border-b border-line px-6 py-7">
-          <div className="inline-flex max-w-full rounded-xl bg-[#EAF1FB] px-2 py-1.5 shadow-card">
+    <div className="min-h-screen bg-surface text-ink">
+      <header className="sticky top-0 z-[1000] border-b border-line bg-white/95 shadow-card backdrop-blur">
+        <div className="mx-auto flex h-[70px] max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-7">
+          <div className="flex min-w-0 items-center gap-3">
             <img
               src="/urban-sentinel-logo.png"
               alt="Urban Sentinel — Detect. Alert. Protect."
-              className="h-auto w-full max-w-[220px] object-contain object-left"
+              className="h-[46px] w-auto max-w-[min(46vw,300px)] object-contain object-left"
             />
           </div>
-          <p className="mt-3 pl-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-ink-muted">
-            Authority operations
-          </p>
+          <div className="hidden sm:block"><ConnectionStatus isConnected={isConnected} /></div>
+          <div className="sm:hidden"><ConnectionStatus isConnected={isConnected} compact /></div>
         </div>
-
-        <div className="px-6 pb-3 pt-7 text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-muted">
-          Workspace
+        <div className="overflow-x-auto border-t border-line/70 lg:hidden">
+          <Navigation compact />
         </div>
-        <Navigation />
+      </header>
 
-        <div className="mt-auto border-t border-line px-6 py-5">
-          <ConnectionStatus isConnected={isConnected} />
-          <div className="mt-4 flex items-center gap-2 text-[11px] text-ink-muted">
-            <Activity size={13} />
-            <span>Urban Sentinel · v0.1.0</span>
+      <div className="mx-auto min-h-[calc(100vh-70px)] max-w-[1600px] lg:grid lg:grid-cols-[205px_minmax(0,1fr)]">
+        <aside className="hidden border-r border-line bg-white px-3 py-5 lg:flex lg:flex-col">
+          <Navigation />
+          <div className="mx-1 mt-auto rounded-xl border border-line bg-[#F8FAFD] p-3">
+            <p className="text-[11px] font-bold text-ink">Built for faster awareness</p>
+            <p className="mt-1 text-[10px] leading-[1.5] text-ink-muted">One view of detected events, where they are happening, and what needs attention first.</p>
           </div>
-        </div>
-      </aside>
+        </aside>
 
-      <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-[1000] border-b border-line bg-card/95 shadow-card backdrop-blur lg:hidden">
-          <div className="flex items-center justify-between gap-3 px-4 py-3">
-            <div className="flex h-14 w-[158px] items-center rounded-lg bg-[#EAF1FB] px-1.5 shadow-card">
-              <img
-                src="/urban-sentinel-logo.png"
-                alt="Urban Sentinel"
-                className="h-auto w-full object-contain object-left"
-              />
-            </div>
-            <ConnectionStatus isConnected={isConnected} compact />
-          </div>
-          <div className="overflow-x-auto">
-            <Navigation compact />
-          </div>
-        </header>
-
-        <main className="mx-auto min-h-screen w-full max-w-[1680px] px-4 py-6 sm:px-6 sm:py-8 lg:px-9 xl:px-11">
+        <main className="min-w-0 px-[clamp(15px,2.4vw,34px)] pb-10 pt-[25px]">
           <Outlet context={outletContext} />
         </main>
       </div>

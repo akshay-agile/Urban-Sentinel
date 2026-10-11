@@ -77,10 +77,20 @@ def _send_fcm(push_token: str, title: str, body: str, data: dict) -> bool:
             notification=messaging.Notification(title=title, body=body),
             data={k: str(v) for k, v in data.items()},
         )
-        messaging.send(message)
+        message_id = messaging.send(message)
+        logger.info(
+            "FCM accepted push for incident #%s (provider message id=%s)",
+            data.get("incident_id", "unknown"),
+            message_id,
+        )
         return True
-    except Exception:
-        logger.exception("FCM send failed for a device token")
+    except Exception as exc:
+        logger.exception(
+            "FCM provider rejected push for incident #%s (error_type=%s provider_code=%s)",
+            data.get("incident_id", "unknown"),
+            type(exc).__name__,
+            getattr(exc, "code", "unknown"),
+        )
         return False
 
 
@@ -95,6 +105,7 @@ def deliver_notifications(db: Session, dispatched: list, incident: Incident) -> 
     with a warning.
     """
     if not dispatched:
+        logger.info("No recipient notifications to deliver for incident #%d", incident.id)
         return
 
     for item in dispatched:
@@ -104,10 +115,19 @@ def deliver_notifications(db: Session, dispatched: list, incident: Incident) -> 
             .with_for_update()
             .execution_options(populate_existing=True)
         )
-        if notification is None or notification.status in {
-            NotificationStatusEnum.sent,
-            NotificationStatusEnum.read,
-        }:
+        if notification is None:
+            logger.warning(
+                "Skipping missing notification row for incident #%d",
+                incident.id,
+            )
+            continue
+        if notification.status in {NotificationStatusEnum.sent, NotificationStatusEnum.read}:
+            logger.info(
+                "Skipping notification #%d for incident #%d; already %s",
+                notification.id,
+                incident.id,
+                notification.status.value,
+            )
             continue
 
         title, body = build_notification_content(
@@ -125,7 +145,22 @@ def deliver_notifications(db: Session, dispatched: list, incident: Incident) -> 
                 continue
 
             user = crud.user.get(db, notification.user_id)
-            if user is None or not user.push_token:
+            if user is None:
+                logger.error(
+                    "Cannot deliver notification #%d for incident #%d: recipient user #%d is missing",
+                    notification.id,
+                    incident.id,
+                    notification.user_id,
+                )
+                crud.notification.update(db, db_obj=notification, obj_in={"status": NotificationStatusEnum.failed})
+                continue
+            if not user.push_token:
+                logger.warning(
+                    "Cannot deliver notification #%d for incident #%d to user #%d: FCM token is missing",
+                    notification.id,
+                    incident.id,
+                    notification.user_id,
+                )
                 crud.notification.update(db, db_obj=notification, obj_in={"status": NotificationStatusEnum.failed})
                 continue
 
@@ -138,6 +173,20 @@ def deliver_notifications(db: Session, dispatched: list, incident: Incident) -> 
                     "sent_at": datetime.now(timezone.utc) if success else None,
                 },
             )
+            if success:
+                logger.info(
+                    "FCM push accepted for notification #%d incident #%d user #%d",
+                    notification.id,
+                    incident.id,
+                    notification.user_id,
+                )
+            else:
+                logger.error(
+                    "FCM push failed for notification #%d incident #%d user #%d; see provider error above",
+                    notification.id,
+                    incident.id,
+                    notification.user_id,
+                )
         else:
             # local channel — the WebSocket broadcast (sent by the
             # caller, using this same personalized title/body) is the
@@ -147,4 +196,10 @@ def deliver_notifications(db: Session, dispatched: list, incident: Incident) -> 
                 db,
                 db_obj=notification,
                 obj_in={"status": NotificationStatusEnum.sent, "sent_at": datetime.now(timezone.utc)},
+            )
+            logger.info(
+                "Local notification #%d for incident #%d user #%d queued for WebSocket delivery; device receipt is not confirmed",
+                notification.id,
+                incident.id,
+                notification.user_id,
             )

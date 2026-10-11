@@ -24,7 +24,7 @@ export default function AlertsScreen() {
 
   const ListHeader = (
     <View>
-      <PageHeader eyebrow="Your notifications" title="Alerts" subtitle="Recorded deliveries for incidents matched to your account."/>
+      <PageHeader eyebrow="Your notifications" title="Alerts" subtitle="Recorded deliveries for incidents matched to your account." right={<TouchableOpacity onPress={() => navigation.navigate('History')} style={styles.historyLink}><Text style={styles.historyLinkText}>History</Text></TouchableOpacity>}/>
       {lastUpdated ? <Text style={styles.updated}>Updated {lastUpdated.toLocaleTimeString()}</Text> : null}
       {isStale ? <View style={styles.stale}><Ionicons name="cloud-offline-outline" size={15} color={colors.warning}/><Text style={styles.staleText}>Refresh failed. Showing previously loaded alerts.</Text></View> : null}
     </View>
@@ -61,7 +61,9 @@ export default function AlertsScreen() {
 const styles = StyleSheet.create({
   list: { width: '100%', maxWidth: 760, alignSelf: 'center', paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.xxl, flexGrow: 1 },
   updated: { color: colors.textMuted, fontSize: 10, marginTop: -spacing.md, marginBottom: spacing.md },
-  stale: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center', backgroundColor: colors.warningSoft, borderColor: '#6A5123', borderWidth: 1, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md },
+  historyLink: { paddingHorizontal: 10, paddingVertical: 8, borderRadius: radius.md, backgroundColor: colors.primarySoft },
+  historyLinkText: { color: colors.primary, fontSize: 11, fontWeight: '700' },
+  stale: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center', backgroundColor: colors.warningSoft, borderColor: '#EBD5A7', borderWidth: 1, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md },
   staleText: { color: colors.textSecondary, fontSize: 11, flex: 1 },
   card: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: radius.lg, padding: spacing.md, marginBottom: spacing.md },
   body: { flex: 1, minWidth: 0 },

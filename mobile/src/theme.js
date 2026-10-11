@@ -1,31 +1,31 @@
-/** Urban Sentinel mobile design tokens. */
+/** Shared light Urban Sentinel palette for citizen and responder screens. */
 export const colors = {
-  primary: '#4D91FF',
-  primaryDark: '#2671E8',
-  primarySoft: '#142B49',
-  secondary: '#34D399',
-  secondarySoft: '#12372F',
-  background: '#081321',
-  card: '#0E1B2B',
-  surface: '#0B1929',
-  elevated: '#172A40',
-  textPrimary: '#F2F6FC',
-  textSecondary: '#A8B7C9',
-  textMuted: '#71839A',
-  border: '#23374F',
-  borderStrong: '#344D69',
-  success: '#34D399',
-  successSoft: '#12372F',
-  warning: '#F5B942',
-  warningSoft: '#3A2D16',
-  danger: '#FF6678',
-  dangerSoft: '#3A202B',
-  info: '#4D9BFF',
-  infoSoft: '#142E4C',
-  hazardFire: '#FF854D',
-  hazardFlood: '#55B7F3',
-  hazardAccident: '#B69CFF',
-  hazardOther: '#F5B942',
+  primary: '#2867B2',
+  primaryDark: '#225695',
+  primarySoft: '#E8F1FC',
+  secondary: '#28794F',
+  secondarySoft: '#E7F5EC',
+  background: '#F4F7FB',
+  card: '#FFFFFF',
+  surface: '#F8FAFD',
+  elevated: '#EEF4FA',
+  textPrimary: '#172B45',
+  textSecondary: '#475D75',
+  textMuted: '#5F7187',
+  border: '#DFE7F0',
+  borderStrong: '#C5D2E0',
+  success: '#28794F',
+  successSoft: '#E7F5EC',
+  warning: '#98600F',
+  warningSoft: '#FFF3D9',
+  danger: '#B8323D',
+  dangerSoft: '#FCEBED',
+  info: '#2768B2',
+  infoSoft: '#E8F3FC',
+  hazardFire: '#B33A3E',
+  hazardFlood: '#2768B2',
+  hazardAccident: '#985514',
+  hazardOther: '#6652A3',
   white: '#FFFFFF',
 };
 
@@ -37,10 +37,10 @@ export const hazardColors = {
 };
 
 export const severityColors = {
-  low: { fg: '#36D6A0', bg: '#12372F' },
-  medium: { fg: '#F2BC5E', bg: '#3A2D16' },
-  high: { fg: '#FB923C', bg: '#3A291F' },
-  critical: { fg: '#FF6678', bg: '#3A202B' },
+  low: { fg: '#28794F', bg: '#E7F5EC' },
+  medium: { fg: '#85550D', bg: '#FFF3D9' },
+  high: { fg: '#A84F16', bg: '#FCECDD' },
+  critical: { fg: '#A52833', bg: '#FCEBED' },
 };
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 };
@@ -55,6 +55,6 @@ export const typography = {
   small: { fontSize: 12, fontWeight: '500' },
 };
 export const shadow = {
-  card: { shadowColor: '#000000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.22, shadowRadius: 8, elevation: 3 },
-  raised: { shadowColor: '#000000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.28, shadowRadius: 14, elevation: 6 },
+  card: { shadowColor: '#193654', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 2 },
+  raised: { shadowColor: '#193654', shadowOffset: { width: 0, height: 7 }, shadowOpacity: 0.12, shadowRadius: 16, elevation: 4 },
 };

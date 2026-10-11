@@ -36,27 +36,27 @@ function describeEvent(event) {
   }
 }
 
-export default function ActivityFeed({ events = [] }) {
+export default function ActivityFeed({ events = [], isConnected = false }) {
   const items = events
     .map((event) => ({ ...event, description: describeEvent(event) }))
     .filter((event) => event.description)
     .slice(0, MAX_ITEMS);
 
   return (
-    <section className="flex h-full min-h-[250px] flex-col rounded-2xl border border-line bg-card p-5 shadow-card" aria-labelledby="activity-title">
-      <div className="mb-4 flex items-center justify-between">
+    <section className="flex min-h-[185px] flex-col rounded-[15px] border border-line bg-card p-4 shadow-card" aria-labelledby="activity-title">
+      <div className="mb-3 flex items-center justify-between">
         <div>
-          <h2 id="activity-title" className="text-sm font-semibold text-ink">Live activity</h2>
-          <p className="mt-1 text-xs text-ink-muted">Events received during this session</p>
+          <h2 id="activity-title" className="text-sm font-semibold text-ink">Recent activity</h2>
+          <p className="mt-1 text-xs text-ink-muted">Events received during this browser session</p>
         </div>
-        <span className="rounded-full border border-line bg-surface px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
-          WebSocket
+        <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${isConnected ? 'border-success/25 bg-success-soft text-success' : 'border-line bg-surface text-ink-muted'}`}>
+          {isConnected ? 'Feed connected' : 'Feed disconnected'}
         </span>
       </div>
 
       {items.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-line px-5 py-8 text-center">
-          <p className="max-w-[220px] text-sm leading-6 text-ink-muted">
+        <div className="flex min-h-[105px] flex-1 items-center justify-center rounded-xl border border-dashed border-line px-5 py-5 text-center">
+          <p className="max-w-[260px] text-xs leading-5 text-ink-muted">
             No incident or device events have arrived since this dashboard session began.
           </p>
         </div>

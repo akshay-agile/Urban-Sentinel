@@ -33,12 +33,21 @@ export function useLiveAlerts() {
       const socket = new WebSocket(WS_URL);
       socketRef.current = socket;
 
+      socket.onopen = () => console.info('Notification event socket connected.');
+
       socket.onmessage = (event) => {
         let data;
         try {
           data = JSON.parse(event.data);
         } catch {
           return; // ignore malformed messages
+        }
+
+        if (data?.type !== 'notification_created' || data?.user_id !== user.id) return;
+
+        if (data.channel === 'fcm') {
+          console.info('FCM notification event received over WebSocket; no local notification scheduled.');
+          return;
         }
 
         if (shouldScheduleLocalNotification(data, user.id)) {
@@ -51,14 +60,22 @@ export function useLiveAlerts() {
               data: { incidentId: data.incident_id },
             },
             trigger: null, // fire immediately
+          }).then((notificationId) => {
+            console.info('Local notification scheduled by the app:', notificationId);
+          }).catch((error) => {
+            console.warn('Could not schedule local notification:', error?.message || 'unknown error');
           });
         }
       };
 
       socket.onclose = () => {
+        console.warn('Notification event socket closed.');
         if (!cancelled) reconnectTimer = setTimeout(connect, RECONNECT_DELAY_MS);
       };
-      socket.onerror = () => socket.close();
+      socket.onerror = () => {
+        console.warn('Notification event socket error.');
+        socket.close();
+      };
     }
 
     connect();

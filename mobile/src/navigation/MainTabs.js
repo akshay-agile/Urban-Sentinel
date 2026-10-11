@@ -3,6 +3,9 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
 import HomeScreen from '../screens/HomeScreen';
+import MapScreen from '../screens/MapScreen';
+import ReportScreen from '../screens/ReportScreen';
+import SafetyGuideScreen from '../screens/SafetyGuideScreen';
 import NearbyIncidentsScreen from '../screens/NearbyIncidentsScreen';
 import AlertsScreen from '../screens/AlertsScreen';
 import HistoryScreen from '../screens/HistoryScreen';
@@ -27,6 +30,8 @@ function HomeStack() {
   return (
     <HomeStackNav.Navigator screenOptions={{ headerShown: false }}>
       <HomeStackNav.Screen name="HomeMain" component={HomeScreen} />
+      <HomeStackNav.Screen name="Alerts" component={AlertsScreen} options={{ ...stackHeaderOptions, title: 'Notifications' }} />
+      <HomeStackNav.Screen name="History" component={HistoryScreen} options={{ ...stackHeaderOptions, title: 'Alert history' }} />
       <HomeStackNav.Screen
         name="NearbyIncidents"
         component={NearbyIncidentsScreen}
@@ -47,8 +52,9 @@ function ProfileStack() {
 
 const ICONS = {
   Home: 'home',
-  Alerts: 'notifications',
-  History: 'time',
+  Map: 'map',
+  Report: 'megaphone',
+  Help: 'help-circle',
   Profile: 'person',
 };
 
@@ -57,11 +63,12 @@ export default function MainTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
+        tabBarHideOnKeyboard: true,
         tabBarStyle: {
           backgroundColor: colors.card,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 64,
+          height: 68,
           paddingTop: 7,
           paddingBottom: 9,
         },
@@ -74,8 +81,9 @@ export default function MainTabs() {
       })}
     >
       <Tab.Screen name="Home" component={HomeStack} />
-      <Tab.Screen name="Alerts" component={AlertsScreen} />
-      <Tab.Screen name="History" component={HistoryScreen} />
+      <Tab.Screen name="Map" component={MapScreen} />
+      <Tab.Screen name="Report" component={ReportScreen} />
+      <Tab.Screen name="Help" component={SafetyGuideScreen} />
       <Tab.Screen name="Profile" component={ProfileStack} />
     </Tab.Navigator>
   );

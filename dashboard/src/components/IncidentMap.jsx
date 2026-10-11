@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -18,7 +18,7 @@ L.Icon.Default.mergeOptions({
 });
 
 function incidentIcon(incident, selected) {
-  const color = INCIDENT_TYPE_COLORS[incident.incident_type] || '#A7B7CC';
+  const color = INCIDENT_TYPE_COLORS[incident.incident_type] || '#5F7187';
   return new L.DivIcon({
     html: `<span class="ops-map-marker${selected ? ' ops-map-marker--selected' : ''}" style="--marker-color:${color}"><span class="ops-map-marker-dot"></span></span>`,
     className: 'ops-map-marker-shell',
@@ -54,6 +54,7 @@ export default function IncidentMap({
   selectedIncidentId = null,
   onIncidentSelect,
 }) {
+  const [tileStatus, setTileStatus] = useState('loading');
   const points = [
     ...devices.map((d) => [d.latitude, d.longitude]),
     ...incidents.map((i) => [i.latitude, i.longitude]),
@@ -62,12 +63,16 @@ export default function IncidentMap({
   const selectedIncident = incidents.find((incident) => incident.id === selectedIncidentId) || null;
 
   return (
-    <div style={{ height }} className="rounded-2xl overflow-hidden border border-line shadow-card">
+    <div style={{ height }} className="relative overflow-hidden rounded-xl border border-line bg-[#EAF3F1]">
       <MapContainer center={center} zoom={13} style={{ height: '100%', width: '100%' }}>
         <MapViewport center={center} selectedIncident={selectedIncident} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          eventHandlers={{
+            tileload: () => setTileStatus('loaded'),
+            tileerror: () => setTileStatus((current) => current === 'loaded' ? current : 'error'),
+          }}
         />
 
         {devices.map((device) => (
@@ -109,6 +114,13 @@ export default function IncidentMap({
           </div>
         ))}
       </MapContainer>
+      {tileStatus !== 'loaded' ? (
+        <div className="pointer-events-none absolute right-3 top-3 z-[500] max-w-[min(360px,calc(100%-24px))] rounded-lg border border-white/80 bg-white/95 px-3 py-2 text-[10px] leading-4 text-ink-soft shadow-card" role="status">
+          {tileStatus === 'error'
+            ? 'Map tiles could not be loaded. Check network access to OpenStreetMap.'
+            : 'Loading map tiles…'}
+        </div>
+      ) : null}
     </div>
   );
 }

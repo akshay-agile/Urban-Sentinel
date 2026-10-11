@@ -57,7 +57,7 @@ function initials(name) { return (name || '?').split(' ').map((part) => part[0])
 const styles = StyleSheet.create({
   content: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.xxl, maxWidth: 720, width: '100%', alignSelf: 'center' },
   identity: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: radius.lg, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, padding: spacing.lg, marginBottom: spacing.md },
-  avatar: { width: 54, height: 54, borderRadius: radius.lg, backgroundColor: colors.primarySoft, borderWidth: 1, borderColor: '#28517C', alignItems: 'center', justifyContent: 'center' },
+  avatar: { width: 54, height: 54, borderRadius: radius.lg, backgroundColor: colors.primarySoft, borderWidth: 1, borderColor: '#D4E4F5', alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: colors.primary, fontSize: 18, fontWeight: '800' }, identityCopy: { flex: 1 }, name: { color: colors.textPrimary, fontSize: 16, fontWeight: '700' }, email: { color: colors.textSecondary, fontSize: 12, marginTop: 3 }, accountId: { color: colors.textMuted, fontSize: 10, marginTop: 4 },
   formCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg, borderWidth: 1, borderColor: colors.border }, sectionTitle: { ...typography.h3, color: colors.textPrimary, marginBottom: spacing.sm },
   label: { color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: spacing.md, marginBottom: spacing.xs },
@@ -66,6 +66,6 @@ const styles = StyleSheet.create({
   message: { fontSize: 12, marginTop: spacing.md }, saveButton: { flexDirection: 'row', gap: spacing.sm, backgroundColor: colors.primaryDark, borderRadius: radius.md, paddingVertical: 13, alignItems: 'center', justifyContent: 'center', marginTop: spacing.lg }, saveText: { color: colors.white, fontWeight: '700', fontSize: 13 },
   navRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: radius.lg, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, padding: spacing.md, marginTop: spacing.md },
   navIcon: { width: 38, height: 38, backgroundColor: colors.primarySoft, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' }, navCopy: { flex: 1 }, navTitle: { color: colors.textPrimary, fontSize: 13, fontWeight: '700' }, navSubtitle: { color: colors.textMuted, fontSize: 10, marginTop: 3 },
-  logout: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, padding: spacing.lg, marginTop: spacing.md, borderWidth: 1, borderColor: '#57303A', backgroundColor: colors.dangerSoft, borderRadius: radius.md }, logoutText: { color: colors.danger, fontSize: 13, fontWeight: '700' },
+  logout: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, padding: spacing.lg, marginTop: spacing.md, borderWidth: 1, borderColor: '#F0C8CC', backgroundColor: colors.dangerSoft, borderRadius: radius.md }, logoutText: { color: colors.danger, fontSize: 13, fontWeight: '700' },
   version: { color: colors.textMuted, fontSize: 9, textAlign: 'center', marginTop: spacing.lg, letterSpacing: 1.2 },
 });

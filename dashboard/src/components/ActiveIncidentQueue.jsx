@@ -11,9 +11,9 @@ const SEVERITY_STYLES = {
 };
 
 const HAZARD_STYLES = {
-  fire: 'text-hazard-fire',
-  flood: 'text-hazard-flood',
-  accident: 'text-hazard-accident',
+  fire: 'bg-danger-soft text-hazard-fire',
+  flood: 'bg-info-soft text-hazard-flood',
+  accident: 'bg-[#FFF0DF] text-hazard-accident',
 };
 
 const HAZARD_LABELS = {
@@ -49,11 +49,11 @@ export default function ActiveIncidentQueue({ incidents, selectedIncidentId, onS
   };
 
   return (
-    <section className="flex h-full min-h-[420px] flex-col rounded-2xl border border-line bg-card shadow-card" aria-labelledby="active-queue-title">
-      <header className="flex items-center justify-between border-b border-line px-5 py-4">
+    <section className="flex min-h-[260px] flex-col self-start overflow-hidden rounded-[15px] border border-line bg-card shadow-card" aria-labelledby="active-queue-title">
+      <header className="flex items-center justify-between border-b border-line px-4 py-[14px]">
         <div>
-          <h2 id="active-queue-title" className="text-sm font-semibold text-ink">Priority queue</h2>
-          <p className="mt-1 text-xs text-ink-muted">Active reports · highest severity first</p>
+          <h2 id="active-queue-title" className="text-[13px] font-bold text-ink">Priority incident queue</h2>
+          <p className="mt-1 text-[10px] text-ink-muted">Active reports · highest severity first</p>
         </div>
         <span className="rounded-lg border border-line bg-surface px-2.5 py-1.5 font-mono text-sm font-semibold text-ink">
           {incidents.length}
@@ -61,7 +61,7 @@ export default function ActiveIncidentQueue({ incidents, selectedIncidentId, onS
       </header>
 
       {incidents.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center px-6 py-10 text-center">
+        <div className="flex flex-1 items-center justify-center px-5 py-8 text-center">
           <div>
             <span className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-success-soft text-success">✓</span>
             <p className="text-sm font-medium text-ink">{emptyMessage || 'No active incidents'}</p>
@@ -84,10 +84,12 @@ export default function ActiveIncidentQueue({ incidents, selectedIncidentId, onS
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className={`truncate text-sm font-semibold ${hazardStyle}`}>
-                          <span className="mr-2 font-mono text-[10px] text-ink-muted">{String(index + 1).padStart(2, '0')}</span>
-                          {HAZARD_LABELS[incident.incident_type] || incident.incident_type.replaceAll('_', ' ')}
-                        </p>
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="font-mono text-[10px] text-ink-muted">{String(index + 1).padStart(2, '0')}</span>
+                          <span className={`truncate rounded-full px-2.5 py-1 text-xs font-semibold ${hazardStyle}`}>
+                            {HAZARD_LABELS[incident.incident_type] || incident.incident_type.replaceAll('_', ' ')}
+                          </span>
+                        </div>
                         <p className="mt-1 flex items-center gap-1.5 text-xs text-ink-muted">
                           <MapPin size={12} className="shrink-0" />
                           {Number(incident.latitude).toFixed(4)}, {Number(incident.longitude).toFixed(4)}
