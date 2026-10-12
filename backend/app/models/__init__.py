@@ -7,3 +7,4 @@ from app.models.incident import Incident      # noqa: F401
 from app.models.notification import Notification  # noqa: F401
 from app.models.sensor_reading import SensorReading  # noqa: F401
 from app.models.user import User              # noqa: F401
+from app.models.responder import Responder    # noqa: F401

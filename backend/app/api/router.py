@@ -12,7 +12,8 @@ from app.api.routes import (
     incidents,
     notifications,
     sensor_readings,
-    camera_page
+    camera_page,
+    responders,
 )
 
 api_router = APIRouter()
@@ -23,3 +24,4 @@ api_router.include_router(incidents.router)
 api_router.include_router(notifications.router)
 api_router.include_router(camera.router)
 api_router.include_router(camera_page.router)
+api_router.include_router(responders.router)

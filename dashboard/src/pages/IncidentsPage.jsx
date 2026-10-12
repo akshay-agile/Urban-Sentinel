@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useSearchParams } from 'react-router-dom';
 import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, Clock3, MapPin, Search } from 'lucide-react';
 
 import { getAllIncidents } from '../api/endpoints';
@@ -23,6 +23,7 @@ function matchesDate(value, date, end = false) {
 }
 
 export default function IncidentsPage() {
+  const [searchParams] = useSearchParams();
   const { latestEvent, isConnected } = useOutletContext();
   const fetcher = useCallback(() => getAllIncidents(), []);
   const { data: incidents, isLoading, error, isStale, lastUpdated, refresh } = usePolling(fetcher, 10000);
@@ -34,7 +35,7 @@ export default function IncidentsPage() {
   const [toDate, setToDate] = useState('');
   const [sort, setSort] = useState('newest');
   const [page, setPage] = useState(1);
-  const [selectedId, setSelectedId] = useState(null);
+  const [selectedId, setSelectedId] = useState(() => Number(searchParams.get('incident')) || null);
   const [resolveMessage, setResolveMessage] = useState(null);
 
   useEffect(() => {

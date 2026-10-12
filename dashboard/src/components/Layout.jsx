@@ -3,10 +3,14 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { AlertTriangle, BarChart3, Bell, Camera, Circle, FileText, LayoutDashboard, MapPinned, Radio, UsersRound } from 'lucide-react';
 
 import { useLiveSocket } from '../api/useLiveSocket';
+import apiClient from '../api/client';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Overview', end: true, icon: LayoutDashboard },
+      { to: '/cameras', label: 'Camera network', icon: Camera },
   { to: '/devices', label: 'Devices', icon: Radio },
+      { to: '/responders', label: 'Responders', icon: UsersRound },
+      { to: '/notifications', label: 'Notifications', icon: Bell },
   { to: '/incidents', label: 'Incidents', icon: AlertTriangle },
   { to: '/analytics', label: 'Analytics', icon: BarChart3 },
 ];
@@ -18,14 +22,14 @@ const SIDEBAR_GROUPS = [
       { to: '/', label: 'Overview', end: true, icon: LayoutDashboard },
       { to: '/incidents', label: 'Incidents', icon: AlertTriangle },
       { to: '/#incident-map', label: 'City map', icon: MapPinned, mapAnchor: true },
-      { label: 'Camera network', icon: Camera, unavailable: true },
+      { to: '/cameras', label: 'Camera network', icon: Camera },
     ],
   },
   {
     label: 'Response',
     items: [
-      { label: 'Responders', icon: UsersRound, unavailable: true },
-      { label: 'Notifications', icon: Bell, unavailable: true },
+      { to: '/responders', label: 'Responders', icon: UsersRound },
+      { to: '/notifications', label: 'Notifications', icon: Bell },
       // The existing Analytics page is the closest supported destination for Reports.
       { to: '/analytics', label: 'Reports', icon: FileText },
     ],
@@ -136,6 +140,14 @@ export default function Layout() {
   const location = useLocation();
   const [liveEvents, setLiveEvents] = useState([]);
   const [latestEvent, setLatestEvent] = useState(null);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [authMessage, setAuthMessage] = useState('');
+  const [signedIn, setSignedIn] = useState(Boolean(window.localStorage.getItem('urban_sentinel_access_token')));
+  async function signIn(event) {
+    event.preventDefault(); const form = new FormData(event.currentTarget);
+    try { const response = await apiClient.post('/auth/login', { email: form.get('email'), password: form.get('password') }); window.localStorage.setItem('urban_sentinel_access_token', response.data.access_token); setSignedIn(true); setAuthMessage('Signed in.'); setLoginOpen(false); }
+    catch (error) { setAuthMessage(error.response?.data?.detail || 'Sign-in failed. Check credentials and API connection.'); }
+  }
   const onLiveEvent = useCallback((event) => {
     const receivedAt = Date.now();
     const receivedEvent = {
@@ -170,13 +182,16 @@ export default function Layout() {
               className="h-[46px] w-auto max-w-[min(46vw,300px)] object-contain object-left"
             />
           </div>
-          <div className="hidden sm:block"><ConnectionStatus isConnected={isConnected} /></div>
+          <div className="flex items-center gap-3"><div className="hidden sm:block"><ConnectionStatus isConnected={isConnected} /></div><button onClick={() => { if (signedIn) { window.localStorage.removeItem('urban_sentinel_access_token'); setSignedIn(false); setAuthMessage('Signed out.'); } else setLoginOpen(true); }} className="rounded-lg border border-line px-3 py-2 text-xs font-semibold text-ink">{signedIn ? 'Sign out' : 'Authority sign in'}</button></div>
           <div className="sm:hidden"><ConnectionStatus isConnected={isConnected} compact /></div>
         </div>
         <div className="overflow-x-auto border-t border-line/70 lg:hidden">
           <Navigation compact />
         </div>
       </header>
+
+      {loginOpen && <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/30 p-4"><form onSubmit={signIn} className="w-full max-w-sm space-y-3 rounded-2xl border border-line bg-white p-5 shadow-card"><h2 className="text-lg font-semibold">Authority sign in</h2><p className="text-xs text-ink-muted">Use your existing Urban Sentinel authority account.</p><input required type="email" name="email" autoComplete="username" placeholder="Email" className="w-full rounded-xl border border-line px-3 py-2 text-sm"/><input required type="password" name="password" autoComplete="current-password" placeholder="Password" className="w-full rounded-xl border border-line px-3 py-2 text-sm"/>{authMessage&&<p role="status" className="text-xs text-danger">{authMessage}</p>}<div className="flex justify-end gap-2"><button type="button" onClick={()=>setLoginOpen(false)} className="rounded-lg border border-line px-3 py-2 text-sm">Cancel</button><button className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white">Sign in</button></div></form></div>}
+      {authMessage&&!loginOpen&&<div className="mx-auto max-w-[1600px] px-5 pt-2 text-xs text-ink-muted" role="status">{authMessage}</div>}
 
       <div className="mx-auto min-h-[calc(100vh-70px)] max-w-[1600px] lg:grid lg:grid-cols-[205px_minmax(0,1fr)]">
         <aside className="hidden border-r border-line bg-white px-3 py-5 lg:flex lg:flex-col">

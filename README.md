@@ -22,7 +22,7 @@ The YOLO model weights are kept outside this repository under the sibling `Model
 
 - **Backend:** JWT authentication, device registration, sensor readings, incident persistence and status updates, nearby-user notification targeting, REST endpoints, WebSocket events, MQTT ingestion, and camera-frame ingestion.
 - **Camera inference:** `/api/v1/camera/frame` runs the configured fire, flood, and accident models. A visual classification must be confirmed across three consecutive qualifying frames per device before the camera route dispatches it as an incident. The in-memory confirmation state resets when the backend restarts and is not shared between multiple backend workers.
-- **Dashboard:** light command-centre overview with live API-backed incident/device information, map, filters, activity, analytics, and incident status controls. Camera management, responder management, and a dedicated notifications page are not implemented dashboard destinations; the corresponding sidebar items are disabled. City map focuses the overview map, and Reports opens Analytics.
+- **Dashboard:** light command-centre overview with live API-backed incident/device information, map, filters, activity, analytics, and incident status controls. Camera Network manages registered device metadata and shows available incident history; the API does not establish camera type, connectivity, or active frame submission. Notifications shows authenticated-account notification records. Responders uses a small persisted responder registry with availability and incident assignment; it does not dispatch or receive acknowledgements.
 - **Mobile:** authenticated citizen experience with Home, Map, Report, Help, and Profile tabs; incident details and history; safety guidance; permission settings; and available response progress. Citizen report submission and volunteer opportunities are not backed by current server workflows and are identified as unavailable in the app. Emergency contact actions open the phone dialler; they do not themselves place or confirm a call.
 - **Notifications:** Android push delivery requires a registered Android FCM token and valid Firebase Admin service-account configuration on the backend. Provider acceptance does not prove handset receipt. iOS currently uses foreground app delivery; background APNs delivery is not configured. Recipient selection uses account/device location and incident radius; notification rows are deduplicated per recipient and incident.
 
@@ -119,7 +119,7 @@ npm run dev
 
 Set `VITE_API_BASE_URL` in `dashboard/.env` to the backend API base URL, normally `http://localhost:8000/api/v1`. For a production bundle, run `npm run build`; `npm run preview` serves the generated bundle locally. Vite reads `VITE_*` values at build time.
 
-The dashboard currently exposes `/` (overview), `/devices`, `/incidents`, and `/analytics`. The overview map, incident filters, API-backed queue, and status controls use application data. Do not interpret an empty result as proof that the city is safe or that a camera feed is live.
+The dashboard exposes `/` (overview), `/devices`, `/cameras`, `/incidents`, `/analytics`, `/notifications`, and `/responders`. The overview map, incident filters, API-backed queue, and status controls use application data. Management and recipient-specific notification routes use the existing `/auth/login` JWT flow. Do not interpret an empty result as proof that the city is safe or that a camera feed is live.
 
 ## Mobile setup
 
@@ -164,11 +164,14 @@ API routes are mounted under `/api/v1`. The exact request and response schemas a
 | Area | Representative routes | Purpose |
 |---|---|---|
 | Authentication | `POST /auth/register`, `POST /auth/login`, `GET/PATCH /auth/me` | Account and authenticated profile/token updates |
-| Devices | `GET/POST /devices/`, `GET /devices/by-device-id/{device_id}`, `PATCH/DELETE /devices/{id}` | Camera/sensor registration and administration |
+| Devices | `GET/POST /devices/`, `GET /devices/by-device-id/{device_id}`, `PATCH/DELETE /devices/{id}` | Camera/sensor registration and administration; dashboard metadata create/edit requires an authority JWT |
 | Sensor readings | `GET /sensor-readings/`, `GET /sensor-readings/device/{device_pk}` | Persisted sensor data |
 | Incidents | `GET /incidents/active`, `GET /incidents/`, `GET /incidents/{id}`, `POST /incidents/`, `PATCH/DELETE /incidents/{id}` | Incident listing, details, creation, and status management |
 | Camera | `POST /camera/frame` | Multipart image submission, inference, temporal confirmation, and camera incident dispatch |
-| Notifications | `/notifications/` routes | Authenticated notification records and status |
+| Notifications | `GET /notifications/mine`, `/notifications/` routes | Authenticated user's persisted notification history and existing delivery records |
+| Responders | `GET/POST /responders/`, `PATCH /responders/{id}` | Authority-only persisted profiles, availability and incident assignments |
+
+Apply `alembic upgrade head` after updating to create the `responders` table. New responder records start unavailable. Assignment and availability edits are persisted, but no dispatch, acknowledgement, or location tracking capability exists.
 
 Authentication is required on protected user-specific routes. Check `/docs` for route-level authorization and payload details rather than assuming every route is public.
 

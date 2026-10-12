@@ -11,6 +11,9 @@ import DashboardHome from './pages/DashboardHome';
 import DevicesPage from './pages/DevicesPage';
 import IncidentsPage from './pages/IncidentsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import CameraNetworkPage from './pages/CameraNetworkPage';
+import NotificationsPage from './pages/NotificationsPage';
+import RespondersPage from './pages/RespondersPage';
 
 export default function App() {
   return (
@@ -19,6 +22,9 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<DashboardHome />} />
           <Route path="/devices" element={<DevicesPage />} />
+          <Route path="/cameras" element={<CameraNetworkPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/responders" element={<RespondersPage />} />
           <Route path="/incidents" element={<IncidentsPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
         </Route>

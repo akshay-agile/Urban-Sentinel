@@ -11,6 +11,7 @@ from app import crud
 from app.core.security import decode_access_token
 from app.db.session import get_db  # noqa: F401
 from app.models.user import User
+from app.models.enums import RoleEnum
 
 _bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -36,3 +37,9 @@ def get_current_user(
         raise unauthorized
 
     return user
+
+
+def get_current_authority(current_user: User = Depends(get_current_user)) -> User:
+    if current_user.role != RoleEnum.authority:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Authority access required")
+    return current_user

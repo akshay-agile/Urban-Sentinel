@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import crud
-from app.api.deps import get_db
+from app.api.deps import get_current_authority, get_db
 from app.schemas.device import DeviceCreate, DeviceRead, DeviceUpdate
 
 router = APIRouter(prefix="/devices", tags=["devices"])
@@ -30,14 +30,14 @@ def get_device(device_pk: int, db: Session = Depends(get_db)):
 
 
 @router.post("/", response_model=DeviceRead, status_code=201)
-def create_device(payload: DeviceCreate, db: Session = Depends(get_db)):
+def create_device(payload: DeviceCreate, db: Session = Depends(get_db), _authority=Depends(get_current_authority)):
     if crud.device.get_by_device_id(db, device_id=payload.device_id) is not None:
         raise HTTPException(status_code=409, detail="device_id already registered")
     return crud.device.create(db, obj_in=payload.model_dump())
 
 
 @router.patch("/{device_pk}", response_model=DeviceRead)
-def update_device(device_pk: int, payload: DeviceUpdate, db: Session = Depends(get_db)):
+def update_device(device_pk: int, payload: DeviceUpdate, db: Session = Depends(get_db), _authority=Depends(get_current_authority)):
     obj = crud.device.get(db, device_pk)
     if obj is None:
         raise HTTPException(status_code=404, detail="Device not found")
@@ -45,7 +45,7 @@ def update_device(device_pk: int, payload: DeviceUpdate, db: Session = Depends(g
 
 
 @router.delete("/{device_pk}", status_code=204)
-def delete_device(device_pk: int, db: Session = Depends(get_db)):
+def delete_device(device_pk: int, db: Session = Depends(get_db), _authority=Depends(get_current_authority)):
     obj = crud.device.delete(db, id=device_pk)
     if obj is None:
         raise HTTPException(status_code=404, detail="Device not found")
